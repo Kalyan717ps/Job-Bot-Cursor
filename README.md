@@ -1,1 +1,1 @@
-# Job-Bot-Cursor
+# The-Automated-Job-Application-Bot

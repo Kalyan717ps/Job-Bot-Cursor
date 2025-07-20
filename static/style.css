@@ -1,0 +1,9 @@
+/* style.css - Dashboard styling for Job Bot */
+body { font-family: Arial, sans-serif; background: #f3f6fa; }
+table { background: #fff; margin-top: 24px; border-collapse: collapse; width: 80%; margin-left: auto; margin-right: auto;}
+th, td { padding: 12px 16px; border-bottom: 1px solid #ddd; }
+th { background: #333; color: #fff; }
+a { color: #007bff; text-decoration: none; }
+button { padding: 10px 20px; margin-left: 10px; font-size: 16px; }
+.search-container { text-align: center; margin-top: 20px; }
+#searchInput { padding: 10px; width: 300px; font-size: 16px; } 

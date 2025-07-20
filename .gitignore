@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.manifest
+*.spec
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Environments
+env/
+venv/
+ENV/
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# CSV and database files
+*.csv
+database.db
+
+# ChromeDriver
+chromedriver-win64/
+
+# Static uploads
+static/uploads/
+
+# HTML page sources
+page_source.html
