@@ -2,98 +2,81 @@
 <html>
 <head>
   <title>Batch Apply</title>
-  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
   {% include 'navbar.html' %}
 </head>
 <body>
-  <h2>📦 Batch Apply to Matching Jobs</h2>
+  <h2>🚀 Batch Apply</h2>
 
-  {% if jobs %}
-    <!-- Filter Controls -->
-    <div style="margin-bottom: 15px;">
-      <label for="titleFilter">Filter by Job Title:</label>
-      <select id="titleFilter" multiple="multiple" style="width: 250px;">
-        {% for job in jobs|unique(attribute='title') %}
-          <option value="{{ job.title }}">{{ job.title }}</option>
-        {% endfor %}
-      </select>
-
-      <label for="companyFilter" style="margin-left:20px;">Filter by Company:</label>
-      <select id="companyFilter" multiple="multiple" style="width: 250px;">
-        {% for job in jobs|unique(attribute='company') %}
-          <option value="{{ job.company }}">{{ job.company }}</option>
-        {% endfor %}
-      </select>
-
-      <label for="locationFilter" style="margin-left:20px;">Filter by Location:</label>
-      <select id="locationFilter" multiple="multiple" style="width: 250px;">
-        {% for job in jobs|unique(attribute='location') %}
-          <option value="{{ job.location }}">{{ job.location }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <form method="POST">
-      <p>
-        <input type="checkbox" id="selectAll"> <label for="selectAll">Select All Jobs</label>
-      </p>
-      <ul id="jobList">
-        {% for job in jobs %}
-        <li class="job-item" data-title="{{ job.title }}" data-company="{{ job.company }}" data-location="{{ job.location }}">
-          <input type="checkbox" name="job_links" value="{{ job.link }}" checked
-                 {% if job.link in applied_links %} disabled {% endif %}>
-          <strong class="job-title">{{ job.title }}</strong> @
-          <span class="job-company">{{ job.company }}</span> -
-          <span class="job-location">{{ job.location }}</span><br>
-          <a href="{{ job.link }}" target="_blank">View Job</a>
-          {% if job.link in applied_links %}
-            <span style="color:gray;">(Already applied)</span>
-          {% endif %}
-        </li>
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <ul>
+        {% for message in messages %}
+          <li>{{ message }}</li>
         {% endfor %}
       </ul>
-      <button type="submit">🚀 Apply Selected Jobs</button>
-    </form>
-  {% else %}
-    <p>😕 No jobs matched your profile. Try updating <a href="{{ url_for('profile') }}">your profile</a>.</p>
-  {% endif %}
+    {% endif %}
+  {% endwith %}
+
+  <div style="margin-bottom: 15px;">
+    <label>Filter by Job Title:</label>
+    <select id="titleFilter" multiple style="width: 250px;">
+      {% for job in jobs|unique(attribute='title') %}
+        <option value="{{ job.title }}">{{ job.title }}</option>
+      {% endfor %}
+    </select>
+
+    <label style="margin-left:20px;">Filter by Company:</label>
+    <select id="companyFilter" multiple style="width: 250px;">
+      {% for job in jobs|unique(attribute='company') %}
+        <option value="{{ job.company }}">{{ job.company }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <form method="POST">
+    <p><input type="checkbox" id="selectAll"> <label for="selectAll">Select All Jobs</label></p>
+
+    <ul id="jobList">
+      {% for job in jobs %}
+      <li class="job-item"
+          data-title="{{ job.title }}"
+          data-company="{{ job.company }}">
+        <input type="checkbox" name="job_links" value="{{ job.link }}" checked>
+        <strong>{{ job.title }}</strong> @ {{ job.company }}<br>
+        <a href="{{ job.link }}" target="_blank">View Job</a>
+      </li>
+      {% endfor %}
+    </ul>
+
+    <button type="submit">✅ Apply Selected</button>
+  </form>
 
   <script>
-  $(document).ready(function() {
-    $('#titleFilter').select2({ placeholder: 'Job Title', allowClear: true });
-    $('#companyFilter').select2({ placeholder: 'Company', allowClear: true });
-    $('#locationFilter').select2({ placeholder: 'Location', allowClear: true });
+$(function() {
+  $('#titleFilter').select2({ placeholder: "Filter by Title", allowClear: true, width: 'resolve' });
+  $('#companyFilter').select2({ placeholder: "Filter by Company", allowClear: true, width: 'resolve' });
 
-    $('#titleFilter, #companyFilter, #locationFilter').on('change', filterJobs);
+  $('#selectAll').on('change', function() {
+    $('input[name="job_links"]').prop('checked', this.checked);
+  });
 
-    function filterJobs() {
-      let selectedTitles = $('#titleFilter').val() || [];
-      let selectedCompanies = $('#companyFilter').val() || [];
-      let selectedLocations = $('#locationFilter').val() || [];
-
-      $('.job-item').each(function () {
-        let title = $(this).data('title');
-        let company = $(this).data('company');
-        let location = $(this).data('location');
-
-        let show =
-          (selectedTitles.length === 0 || selectedTitles.includes(title)) &&
-          (selectedCompanies.length === 0 || selectedCompanies.includes(company)) &&
-          (selectedLocations.length === 0 || selectedLocations.includes(location));
-
-        $(this).toggle(show);
-      });
-    }
-
-    // Select/Deselect all checkboxes
-    document.getElementById('selectAll').addEventListener('change', function () {
-      const checkboxes = document.querySelectorAll('input[name="job_links"]');
-      for (let cb of checkboxes) {
-        cb.checked = this.checked;
-      }
+  $('#titleFilter, #companyFilter').on('change', function () {
+    const titles = $('#titleFilter').val() || [];
+    const companies = $('#companyFilter').val() || [];
+    $('.job-item').each(function () {
+      const title = $(this).data('title');
+      const company = $(this).data('company');
+      const visible =
+        (titles.length === 0 || titles.includes(title)) &&
+        (companies.length === 0 || companies.includes(company));
+      $(this).toggle(visible);
     });
   });
-  </script>
+});
+</script>
+
 </body>
 </html> 

@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <title>User Profile</title>
-  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet" />
   {% include 'navbar.html' %}
 </head>
 <body>
@@ -12,31 +12,40 @@
   {% with messages = get_flashed_messages() %}
     {% if messages %}
       <ul>
-        {% for message in messages %}
-          <li>{{ message }}</li>
-        {% endfor %}
+        {% for message in messages %}<li>{{ message }}</li>{% endfor %}
       </ul>
     {% endif %}
   {% endwith %}
 
+  <!-- Select2 Styles and Scripts -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
   <form method="POST" enctype="multipart/form-data">
-    <label for="preferred_title">Preferred Job Titles:</label>
-    <select id="preferred_title" name="title" multiple style="width: 100%;">
+    <label for="title">Preferred Job Titles:</label><br>
+    <select id="title" name="title" multiple style="width: 300px;" required>
+      {% set selected_titles = profile.preferred_title.split(',') if profile and profile.preferred_title else [] %}
       {% for job in jobs|unique(attribute='title') %}
-        <option value="{{ job.title }}" {% if profile and profile.preferred_title and job.title in profile.preferred_title %}selected{% endif %}>{{ job.title }}</option>
+        <option value="{{ job.title }}"
+          {% if job.title in selected_titles %}selected{% endif %}>
+          {{ job.title }}
+        </option>
       {% endfor %}
-    </select>
-    <br><br>
+    </select><br><br>
 
-    <label for="preferred_location">Preferred Locations:</label>
-    <select id="preferred_location" name="location" multiple style="width: 100%;">
+    <label for="location">Preferred Locations:</label><br>
+    <select id="location" name="location" multiple style="width: 300px;">
+      {% set selected_locations = profile.preferred_location.split(',') if profile and profile.preferred_location else [] %}
       {% for job in jobs|unique(attribute='company') %}
-        <option value="{{ job.company }}" {% if profile and profile.preferred_location and job.company in profile.preferred_location %}selected{% endif %}>{{ job.company }}</option>
+        <option value="{{ job.company }}"
+          {% if job.company in selected_locations %}selected{% endif %}>
+          {{ job.company }}
+        </option>
       {% endfor %}
-    </select>
-    <br><br>
+    </select><br><br>
 
-    <label>Resume Upload (PDF/DOCX):</label><br>
+    <label for="resume">Resume Upload (PDF/DOCX):</label><br>
     {% if profile and profile.resume_filename %}
       <p>Current: {{ profile.resume_filename }}</p>
     {% endif %}
@@ -44,13 +53,12 @@
 
     <button type="submit">Save Profile</button>
   </form>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
   <script>
-    $(document).ready(function() {
-      $('#preferred_title').select2({ tags: true, placeholder: "Type or select multiple titles" });
-      $('#preferred_location').select2({ tags: true, placeholder: "Type or select locations" });
-    });
+$(function() {
+  $('#title').select2({ tags: true, placeholder: 'Select or enter job titles', width: 'resolve' });
+  $('#location').select2({ tags: true, placeholder: 'Select or enter locations', width: 'resolve' });
+});
   </script>
 </body>
 </html> 

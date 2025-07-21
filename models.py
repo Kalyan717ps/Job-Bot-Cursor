@@ -25,8 +25,7 @@ class Application(db.Model):
     job_title = db.Column(db.String(255))
     company = db.Column(db.String(100))
     link = db.Column(db.String(500))
-    status = db.Column(db.String(50))  # applied, manual, failed
-    reason = db.Column(db.String(255))  # manual fallback reason
+    status = db.Column(db.String(50))  # 'applied', 'manual'
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship("User", backref="applications") 

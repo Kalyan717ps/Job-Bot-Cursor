@@ -196,70 +196,54 @@ def apply():
 @login_required
 def batch_apply():
     profile = UserProfile.query.filter_by(user_id=current_user.id).first()
-
-    # Get all links the user has already applied to (applied or manual)
-    applied_links = set(
-        app.link for app in Application.query.filter_by(user_id=current_user.id).all()
-        if app.status in ["applied", "manual"]
-    )
+    applied_links = set(app.link for app in Application.query.filter_by(user_id=current_user.id).all())
+    bot_path = os.path.join(os.getcwd(), 'apply_bot.py')
+    python_path = os.path.join(os.getcwd(), 'env', 'Scripts', 'python.exe')
 
     if request.method == 'POST':
-        job_links = request.form.getlist('job_links')
-        applied_count = 0
-        manual_count = 0
-
+        selected_links = request.form.getlist('job_links')
+        applied, manual = 0, 0
         jobs_to_apply = []
-        with open('remoteok_jobs.csv', newline='', encoding='utf-8') as f:
+
+        # Load all jobs first
+        with open("remoteok_jobs.csv", newline='', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
-                if row['link'] in job_links:
+                if row['link'] in selected_links and row['link'] not in applied_links:
                     jobs_to_apply.append(row)
 
-        python_exe = os.path.join(os.getcwd(), 'env', 'Scripts', 'python.exe')
-        bot_path = os.path.join(os.getcwd(), 'apply_bot.py')
-
         for job in jobs_to_apply:
-            if job['link'] in applied_links:
-                continue  # Skip already-applied jobs
             try:
-                result = subprocess.run([python_exe, bot_path, job['link']], capture_output=True, text=True)
-                if result.returncode == 0:
-                    status = 'applied'
-                    reason = None
-                else:
-                    status = 'manual'
-                    reason = result.stdout.strip().split('\n')[-1]  # Last print line from the bot
-            except Exception as e:
+                result = subprocess.run([python_path, bot_path, job['link']],
+                                        capture_output=True, text=True)
+                status = 'applied' if result.returncode == 0 else 'manual'
+            except:
                 status = 'manual'
-                reason = f'Error: {e}'
 
-            app_log = Application(
+            app_entry = Application(
                 user_id=current_user.id,
                 job_title=job['title'],
                 company=job['company'],
                 link=job['link'],
-                status=status,
-                reason=reason
+                status=status
             )
-            db.session.add(app_log)
+            db.session.add(app_entry)
             db.session.commit()
 
-            if status == 'applied': applied_count += 1
-            else: manual_count += 1
+            if status == 'applied':
+                applied += 1
+            else:
+                manual += 1
 
-        flash(f"✅ Applied to {applied_count} job(s). Sent {manual_count} to Manual Apply.")
+        flash(f"✅ Batch Apply: {applied} job(s) applied, {manual} sent to manual apply.")
         return redirect(url_for('dashboard'))
 
-    # ✅ UPDATED: Load ALL jobs (not just profile matches)
-    all_jobs = []
-    try:
-        with open('remoteok_jobs.csv', newline='', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            all_jobs = list(reader)
-    except:
-        flash("⚠️ Could not load jobs. Try again later.")
+    # GET: Show all jobs
+    with open("remoteok_jobs.csv", newline='', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        all_jobs = list(reader)
 
-    return render_template('batch_apply.html', jobs=all_jobs, applied_links=applied_links)
+    return render_template("batch_apply.html", jobs=all_jobs)
 
 @app.route('/applications')
 @login_required

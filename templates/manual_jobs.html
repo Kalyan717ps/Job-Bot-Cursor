@@ -5,24 +5,30 @@
 <body>
   <h2>🛠 Manual Job Applications</h2>
   <table border="1" cellpadding="8">
-    <tr>
-      <th>Job Title</th>
-      <th>Company</th>
-      <th>Link</th>
-      <th>Manual Reason</th>
-      <th>Detected</th>
-    </tr>
-    {% for job in jobs %}
-    <tr>
-      <td>{{ job.job_title }}</td>
-      <td>{{ job.company }}</td>
-      <td><a href="{{ job.link }}" target="_blank">Open</a></td>
-      <td style="color:#d9534f;">{{ job.reason or 'N/A' }}</td>
-      <td>{{ job.timestamp.strftime('%d %b %Y %H:%M') }}</td>
-    </tr>
-    {% else %}
-      <tr><td colspan="5">No manual jobs found. Great job bot!</td></tr>
-    {% endfor %}
+    <thead>
+      <tr>
+        <th>Job Title</th>
+        <th>Company</th>
+        <th>Link</th>
+        <th>Detected</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for job in jobs %}
+        {% if job.status == 'manual' %}
+          <tr>
+            <td>{{ job.job_title }}</td>
+            <td>{{ job.company }}</td>
+            <td><a href="{{ job.link }}" target="_blank">View</a></td>
+            <td>{{ job.timestamp.strftime('%d %b %Y %H:%M') }}</td>
+          </tr>
+        {% endif %}
+      {% else %}
+        <tr>
+          <td colspan="4">No manual jobs found. Great job bot!</td>
+        </tr>
+      {% endfor %}
+    </tbody>
   </table>
 </body>
 </html> 

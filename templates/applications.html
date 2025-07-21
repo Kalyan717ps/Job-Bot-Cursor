@@ -5,24 +5,32 @@
 <body>
   <h2>Your Job Application History</h2>
   <table border="1" cellpadding="8">
-    <tr>
-      <th>Job Title</th>
-      <th>Company</th>
-      <th>Status</th>
-      <th>Link</th>
-      <th>Applied At</th>
-    </tr>
-    {% for job in applications %}
-    <tr>
-      <td>{{ job.job_title }}</td>
-      <td>{{ job.company }}</td>
-      <td><strong>{{ job.status.upper() }}</strong></td>
-      <td><a href="{{ job.link }}" target="_blank">View</a></td>
-      <td>{{ job.timestamp.strftime('%d %b %Y %H:%M') }}</td>
-    </tr>
-    {% else %}
-      <tr><td colspan="5">You haven't applied to any jobs yet.</td></tr>
-    {% endfor %}
+    <thead>
+      <tr>
+        <th>Job Title</th>
+        <th>Company</th>
+        <th>Status</th>
+        <th>Link</th>
+        <th>Applied At</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for job in applications %}
+        {% if job.status == 'applied' %}
+          <tr>
+            <td>{{ job.job_title }}</td>
+            <td>{{ job.company }}</td>
+            <td><strong>{{ job.status.upper() }}</strong></td>
+            <td><a href="{{ job.link }}" target="_blank">View</a></td>
+            <td>{{ job.timestamp.strftime('%d %b %Y %H:%M') }}</td>
+          </tr>
+        {% endif %}
+      {% else %}
+        <tr>
+          <td colspan="5">You haven't applied to any jobs yet.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
   </table>
 </body>
 </html> 

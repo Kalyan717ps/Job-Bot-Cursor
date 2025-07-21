@@ -6,29 +6,27 @@
   {% include 'navbar.html' %}
 </head>
 <body>
-  <h2>Welcome, {{ current_user.email }}</h2>
-  <p>This is your personalized job dashboard.</p>
+  <h2>This is your personalized job dashboard.</h2>
 
-  <hr>
-  <h3>🎯 Jobs matching your preferences:</h3>
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <ul>
+        {% for message in messages %}
+          <li>{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
 
   {% if jobs %}
     <ul>
-    {% for job in jobs %}
+      {% for job in jobs %}
       <li>
-        <strong>{{ job.title }}</strong><br>
-        <em>{{ job.company }}</em><br>
-        <a href="{{ job.link }}" target="_blank">View Job</a><br>
-        <form action="{{ url_for('apply') }}" method="POST" style="margin-top: 5px;">
-          <input type="hidden" name="link" value="{{ job.link }}">
-          <button type="submit">Apply Now</button>
-        </form>
-      </li><br>
-    {% endfor %}
+        <strong>{{ job.title }}</strong> @ {{ job.company }}<br>
+        <a href="{{ job.link }}" target="_blank">View Job</a>
+      </li>
+      {% endfor %}
     </ul>
-    <form action="{{ url_for('batch_apply') }}" method="POST">
-      <button type="submit">Batch Apply to All Matching Jobs</button>
-    </form>
   {% else %}
     <p>❌ No matching jobs found right now. Try updating your preferences!</p>
   {% endif %}
