@@ -5,6 +5,53 @@ from flask_login import LoginManager, login_user, login_required, logout_user, c
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User
 import os
+from flask import render_template, request, redirect, url_for, flash
+from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
+
+UPLOAD_FOLDER = os.path.join('static', 'uploads')
+ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    from models import UserProfile, db
+
+    profile = UserProfile.query.filter_by(user_id=current_user.id).first()
+
+    if request.method == 'POST':
+        title = request.form.get('title')
+        location = request.form.get('location')
+        file = request.files.get('resume')
+
+        filename = profile.resume_filename if profile else None
+
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+        if profile:
+            profile.preferred_title = title
+            profile.preferred_location = location
+            profile.resume_filename = filename
+        else:
+            profile = UserProfile(
+                user_id=current_user.id,
+                preferred_title=title,
+                preferred_location=location,
+                resume_filename=filename
+            )
+            db.session.add(profile)
+
+        db.session.commit()
+        flash("✅ Profile updated successfully!")
+        return redirect(url_for('profile'))
+
+    return render_template("profile.html", profile=profile)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yoursecretkey'

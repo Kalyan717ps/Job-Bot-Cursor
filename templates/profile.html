@@ -1,1 +1,36 @@
-<!-- profile.html - Profile upload and job preferences for Job Bot --> 
+<!-- templates/profile.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>User Profile</title>
+</head>
+<body>
+  <h2>Update Profile</h2>
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <ul>
+        {% for message in messages %}
+          <li>{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  <form method="POST" enctype="multipart/form-data">
+    <label>Preferred Job Title:</label><br>
+    <input type="text" name="title" value="{{ profile.preferred_title if profile else '' }}"><br><br>
+
+    <label>Preferred Location:</label><br>
+    <input type="text" name="location" value="{{ profile.preferred_location if profile else '' }}"><br><br>
+
+    <label>Resume Upload (PDF/DOCX):</label><br>
+    {% if profile and profile.resume_filename %}
+      <p>Current: {{ profile.resume_filename }}</p>
+    {% endif %}
+    <input type="file" name="resume"><br><br>
+
+    <button type="submit">Save Profile</button>
+  </form>
+</body>
+</html> 
