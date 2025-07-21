@@ -18,3 +18,14 @@ class UserProfile(db.Model):
     preferred_location = db.Column(db.String(80))
 
     user = db.relationship("User", backref="profile") 
+
+class Application(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    job_title = db.Column(db.String(255))
+    company = db.Column(db.String(100))
+    link = db.Column(db.String(500))
+    status = db.Column(db.String(50))  # applied, manual, failed
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship("User", backref="applications") 
