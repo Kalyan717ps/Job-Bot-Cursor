@@ -33,10 +33,22 @@ def profile():
 
     profile = UserProfile.query.filter_by(user_id=current_user.id).first()
 
+    # Load jobs for select options
+    jobs = []
+    try:
+        with open('remoteok_jobs.csv', newline='', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            jobs = list(reader)
+    except Exception:
+        jobs = []
+
     if request.method == 'POST':
-        title = request.form.get('title')
-        location = request.form.get('location')
+        titles = request.form.getlist('title')
+        locations = request.form.getlist('location')
         file = request.files.get('resume')
+
+        preferred_titles = ','.join(titles)
+        preferred_locations = ','.join(locations)
 
         filename = profile.resume_filename if profile else None
 
@@ -45,14 +57,14 @@ def profile():
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
         if profile:
-            profile.preferred_title = title
-            profile.preferred_location = location
+            profile.preferred_title = preferred_titles
+            profile.preferred_location = preferred_locations
             profile.resume_filename = filename
         else:
             profile = UserProfile(
                 user_id=current_user.id,
-                preferred_title=title,
-                preferred_location=location,
+                preferred_title=preferred_titles,
+                preferred_location=preferred_locations,
                 resume_filename=filename
             )
             db.session.add(profile)
@@ -61,7 +73,7 @@ def profile():
         flash("✅ Profile updated successfully!")
         return redirect(url_for('profile'))
 
-    return render_template("profile.html", profile=profile)
+    return render_template("profile.html", profile=profile, jobs=jobs)
 
 # STEP 3: Init db and login
 
