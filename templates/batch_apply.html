@@ -2,7 +2,9 @@
 <html>
 <head>
   <title>Batch Apply</title>
-  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
 </head>
 <body>
   <h2>📦 Batch Apply to Matching Jobs</h2>
@@ -13,19 +15,23 @@
   </p>
 
   {% if jobs %}
-    <!-- Search bar -->
-    <input type="text" id="jobSearch" placeholder="🔍 Search jobs..." style="width:300px; margin-bottom:10px;">
-    <!-- Multi-select filters -->
-    <select id="companyFilter" multiple style="width: 300px;">
-      {% for job in jobs|unique(attribute='company') %}
-        <option value="{{ job.company|lower }}">{{ job.company }}</option>
-      {% endfor %}
-    </select>
-    <select id="titleFilter" multiple style="width: 300px;">
-      {% for job in jobs|unique(attribute='title') %}
-        <option value="{{ job.title|lower }}">{{ job.title }}</option>
-      {% endfor %}
-    </select>
+    <!-- Dropdown Filters -->
+    <p>
+      <label>Filter by Job Titles:</label><br>
+      <select id="titleFilter" multiple style="width: 300px;">
+        {% for job in jobs|unique(attribute='title') %}
+          <option value="{{ job.title|lower }}">{{ job.title }}</option>
+        {% endfor %}
+      </select>
+    </p>
+    <p>
+      <label>Filter by Company:</label><br>
+      <select id="companyFilter" multiple style="width: 300px;">
+        {% for job in jobs|unique(attribute='company') %}
+          <option value="{{ job.company|lower }}">{{ job.company }}</option>
+        {% endfor %}
+      </select>
+    </p>
     <form method="POST">
       <p>
         <input type="checkbox" id="selectAll"> <label for="selectAll">Select All Jobs</label>
@@ -46,54 +52,41 @@
     <p>😕 No jobs matched your profile. Try updating <a href="{{ url_for('profile') }}">your profile</a>.</p>
   {% endif %}
 
-  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script>
-    $(document).ready(function() {
-      $('#companyFilter').select2({ placeholder: 'Filter by company' });
-      $('#titleFilter').select2({ placeholder: 'Filter by title' });
+  $(document).ready(function() {
+    $('#titleFilter, #companyFilter').select2({ placeholder: "Filter", allowClear: true });
 
-      $('#companyFilter, #titleFilter').on('change', function () {
-        filterJobs();
-      });
+    $('#titleFilter, #companyFilter').change(function () {
+      filterJobs();
+    });
 
-      document.getElementById('jobSearch').addEventListener('keyup', filterJobs);
+    function filterJobs() {
+      let selectedTitles = $('#titleFilter').val() || [];
+      let selectedCompanies = $('#companyFilter').val() || [];
 
-      function filterJobs() {
-        const searchText = document.getElementById('jobSearch').value.toLowerCase();
-        const selectedCompanies = $('#companyFilter').val();
-        const selectedTitles = $('#titleFilter').val();
+      $('.job-item').each(function () {
+        let title = $(this).data('title');
+        let company = $(this).data('company');
 
-        document.querySelectorAll(".job-item").forEach(function (job) {
-          const title = job.getAttribute("data-title").toLowerCase();
-          const company = job.getAttribute("data-company").toLowerCase();
-          let visible = true;
+        let titleMatch = selectedTitles.length === 0 || selectedTitles.includes(title);
+        let companyMatch = selectedCompanies.length === 0 || selectedCompanies.includes(company);
 
-          // Keyword search
-          if (searchText && !title.includes(searchText) && !company.includes(searchText)) {
-            visible = false;
-          }
-
-          // Multi-select-match
-          if (selectedCompanies && selectedCompanies.length && !selectedCompanies.includes(company)) {
-            visible = false;
-          }
-          if (selectedTitles && selectedTitles.length && !selectedTitles.includes(title)) {
-            visible = false;
-          }
-
-          job.style.display = visible ? '' : 'none';
-        });
-      }
-
-      // Select/Deselect all checkboxes
-      document.getElementById('selectAll').addEventListener('change', function () {
-        const checkboxes = document.querySelectorAll('input[name="job_links"]');
-        for (let cb of checkboxes) {
-          cb.checked = this.checked;
+        if (titleMatch && companyMatch) {
+          $(this).show();
+        } else {
+          $(this).hide();
         }
       });
+    }
+
+    // Select/Deselect all checkboxes
+    document.getElementById('selectAll').addEventListener('change', function () {
+      const checkboxes = document.querySelectorAll('input[name="job_links"]');
+      for (let cb of checkboxes) {
+        cb.checked = this.checked;
+      }
     });
+  });
   </script>
 </body>
 </html> 
