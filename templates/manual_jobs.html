@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head><title>Manual Apply Jobs</title></head>
+<body>
+  <h2>🛠 Manual Job Applications</h2>
+  <p>
+    <a href="{{ url_for('dashboard') }}">Dashboard</a> |
+    <a href="{{ url_for('manual_jobs') }}">Manual Apply</a> |
+    <a href="{{ url_for('applications') }}">Applications</a> |
+    <a href="{{ url_for('logout') }}">Logout</a> |
+    <a href="{{ url_for('profile') }}">Edit Profile</a>
+  </p>
+  <p>These jobs could not be automatically applied. Please follow the links manually.</p>
+  <table border="1" cellpadding="8">
+    <tr>
+      <th>Job Title</th>
+      <th>Company</th>
+      <th>Link</th>
+      <th>Detected</th>
+    </tr>
+    {% for job in jobs %}
+    <tr>
+      <td>{{ job.job_title }}</td>
+      <td>{{ job.company }}</td>
+      <td><a href="{{ job.link }}" target="_blank">Open</a></td>
+      <td>{{ job.timestamp.strftime('%d %b %Y %H:%M') }}</td>
+    </tr>
+    {% else %}
+      <tr><td colspan="4">No manual jobs found. Great job bot!</td></tr>
+    {% endfor %}
+  </table>
+</body>
+</html> 

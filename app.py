@@ -237,6 +237,18 @@ def batch_apply():
     flash(f"Batch apply complete: {applied} job(s) applied automatically, {manual} added to Manual Apply.")
     return redirect(url_for('dashboard'))
 
+@app.route('/applications')
+@login_required
+def applications():
+    user_applied_jobs = Application.query.filter_by(user_id=current_user.id).order_by(Application.timestamp.desc()).all()
+    return render_template('applications.html', applications=user_applied_jobs)
+
+@app.route('/manual-jobs')
+@login_required
+def manual_jobs():
+    manual_jobs = Application.query.filter_by(user_id=current_user.id, status='manual').order_by(Application.timestamp.desc()).all()
+    return render_template('manual_jobs.html', jobs=manual_jobs)
+
 ##########################################
 # MAIN
 ##########################################
