@@ -5,13 +5,23 @@ from flask_login import LoginManager, login_user, login_required, logout_user, c
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User
 import os
-from flask import render_template, request, redirect, url_for, flash
-from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
+import csv
+from models import UserProfile
+import subprocess
 
+# STEP 1: CREATE Flask app
+app = Flask(__name__)
+
+# STEP 2: App configurations
+app.config['SECRET_KEY'] = 'yoursecretkey'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Setup upload folder
 UPLOAD_FOLDER = os.path.join('static', 'uploads')
-ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -53,10 +63,7 @@ def profile():
 
     return render_template("profile.html", profile=profile)
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'yoursecretkey'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# STEP 3: Init db and login
 
 db.init_app(app)
 
@@ -76,7 +83,33 @@ def load_user(user_id):
 @app.route('/')
 @login_required
 def dashboard():
-    return render_template("dashboard.html", user=current_user)
+    # Get current user's profile
+    profile = UserProfile.query.filter_by(user_id=current_user.id).first()
+    
+    # Fallback if profile isn't completed yet
+    if not profile:
+        flash("🚨 Please complete your profile first.")
+        return redirect(url_for('profile'))
+
+    matched_jobs = []
+
+    try:
+        with open("remoteok_jobs.csv", newline='', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                job_title = row['title'].lower()
+                job_company = row['company'].lower()
+                print(job_title, job_company)  # Debug: See what jobs are being read
+
+                # Looser match: show jobs if either field matches
+                if (profile.preferred_title.lower() in job_title) or (profile.preferred_location.lower() in job_company):
+                    matched_jobs.append(row)
+    except Exception as e:
+        print(f"Error reading jobs: {e}")
+        flash("❌ Could not load jobs. Make sure remoteok_jobs.csv exists.")
+        matched_jobs = []
+
+    return render_template("dashboard.html", profile=profile, jobs=matched_jobs)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -124,6 +157,28 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
+@app.route('/apply', methods=['POST'])
+@login_required
+def apply():
+    job_link = request.form.get('link')
+
+    if not job_link:
+        flash("❌ Invalid job link.")
+        return redirect(url_for('dashboard'))
+
+    try:
+        # Use the full path to the virtualenv's Python interpreter
+        subprocess.run([
+            r'C:\Users\sudha\OneDrive\Desktop\Punna Sudha Kalyan\Projects\Job-Bot-Cursor\env\Scripts\python.exe',
+            'apply_bot.py',
+            job_link
+        ], check=True)
+        flash(f"✅ Applied to job successfully: {job_link}")
+    except subprocess.CalledProcessError as e:
+        flash("❌ Failed to apply using bot. Check logs.")
+
+    return redirect(url_for('dashboard'))
 
 ##########################################
 # MAIN
