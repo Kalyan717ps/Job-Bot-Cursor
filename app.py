@@ -190,7 +190,6 @@ def batch_apply():
         applied_count = 0
         manual_count = 0
 
-        # Load all jobs and match selected
         jobs_to_apply = []
         with open('remoteok_jobs.csv', newline='', encoding='utf-8') as f:
             reader = csv.DictReader(f)
@@ -198,53 +197,42 @@ def batch_apply():
                 if row['link'] in job_links:
                     jobs_to_apply.append(row)
 
-        # Python path and ChromeBot path
         python_exe = os.path.join(os.getcwd(), 'env', 'Scripts', 'python.exe')
-        apply_bot_path = os.path.join(os.getcwd(), 'apply_bot.py')
+        bot_path = os.path.join(os.getcwd(), 'apply_bot.py')
 
         for job in jobs_to_apply:
-            link = job['link']
-            title = job['title']
-            company = job['company']
-
             try:
-                result = subprocess.run([python_exe, apply_bot_path, link])
-                # 0 = success, else manual
+                result = subprocess.run([python_exe, bot_path, job['link']])
                 status = 'applied' if result.returncode == 0 else 'manual'
-            except Exception as e:
-                print(f"Error applying to job: {e}")
+            except:
                 status = 'manual'
 
-            # Save to DB
-            application = Application(
+            app_log = Application(
                 user_id=current_user.id,
-                job_title=title,
-                company=company,
-                link=link,
+                job_title=job['title'],
+                company=job['company'],
+                link=job['link'],
                 status=status
             )
-            db.session.add(application)
+            db.session.add(app_log)
             db.session.commit()
 
-            if status == 'applied':
-                applied_count += 1
-            else:
-                manual_count += 1
+            if status == 'applied': applied_count += 1
+            else: manual_count += 1
 
-        flash(f"✅ Batch apply complete: {applied_count} applied, {manual_count} sent to manual apply.")
+        flash(f"✅ Applied to {applied_count} job(s). Sent {manual_count} to Manual Apply.")
         return redirect(url_for('dashboard'))
 
-    # GET: Show the form
-    matched_jobs = []
-    if profile:
+    # ✅ UPDATED: Load ALL jobs (not just profile matches)
+    all_jobs = []
+    try:
         with open('remoteok_jobs.csv', newline='', encoding='utf-8') as f:
             reader = csv.DictReader(f)
-            for row in reader:
-                if profile.preferred_title.lower() in row['title'].lower() or \
-                   profile.preferred_location.lower() in row['company'].lower():
-                    matched_jobs.append(row)
+            all_jobs = list(reader)
+    except:
+        flash("⚠️ Could not load jobs. Try again later.")
 
-    return render_template('batch_apply.html', jobs=matched_jobs)
+    return render_template('batch_apply.html', jobs=all_jobs)
 
 @app.route('/applications')
 @login_required

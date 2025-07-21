@@ -12,15 +12,25 @@
   </p>
 
   {% if jobs %}
+    <!-- Search bar -->
+    <input type="text" id="jobSearch" placeholder="🔍 Search jobs..." style="width:300px; margin-bottom:10px;">
+    <!-- Filter dropdown by company -->
+    <select id="companyFilter" style="margin-left:10px;">
+      <option value="">All Companies</option>
+      {% for job in jobs|unique(attribute='company') %}
+        <option value="{{ job.company }}">{{ job.company }}</option>
+      {% endfor %}
+    </select>
     <form method="POST">
       <p>
         <input type="checkbox" id="selectAll"> <label for="selectAll">Select All Jobs</label>
       </p>
       <ul>
         {% for job in jobs %}
-        <li>
+        <li class="job-item">
           <input type="checkbox" name="job_links" value="{{ job.link }}" checked>
-          <strong>{{ job.title }}</strong> @ <em>{{ job.company }}</em><br>
+          <strong class="job-title">{{ job.title }}</strong> @
+          <span class="job-company">{{ job.company }}</span><br>
           <a href="{{ job.link }}" target="_blank">View Job</a>
         </li><br>
         {% endfor %}
@@ -39,6 +49,26 @@
         cb.checked = this.checked;
       }
     });
+    // Live search and filter
+    document.getElementById('jobSearch').addEventListener('keyup', filterJobs);
+    document.getElementById('companyFilter').addEventListener('change', filterJobs);
+    function filterJobs() {
+      let searchVal = document.getElementById('jobSearch').value.toLowerCase();
+      let companyVal = document.getElementById('companyFilter').value.toLowerCase();
+      let jobs = document.querySelectorAll('.job-item');
+      jobs.forEach(function(job) {
+        let title = job.querySelector('.job-title').textContent.toLowerCase();
+        let company = job.querySelector('.job-company').textContent.toLowerCase();
+        let match = true;
+        if (searchVal && !title.includes(searchVal) && !company.includes(searchVal)) {
+          match = false;
+        }
+        if (companyVal && company !== companyVal) {
+          match = false;
+        }
+        job.style.display = match ? '' : 'none';
+      });
+    }
   </script>
 </body>
 </html> 
