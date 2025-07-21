@@ -7,7 +7,7 @@ from models import db, User
 import os
 from werkzeug.utils import secure_filename
 import csv
-from models import UserProfile
+from models import UserProfile, Application
 import subprocess
 
 # STEP 1: CREATE Flask app
@@ -178,6 +178,63 @@ def apply():
     except subprocess.CalledProcessError as e:
         flash("❌ Failed to apply using bot. Check logs.")
 
+    return redirect(url_for('dashboard'))
+
+@app.route('/batch-apply', methods=['POST', 'GET'])
+@login_required
+def batch_apply():
+    profile = UserProfile.query.filter_by(user_id=current_user.id).first()
+    if not profile:
+        flash("🚨 Please complete your profile first.")
+        return redirect(url_for('profile'))
+
+    # Load personalized jobs
+    matched_jobs = []
+    try:
+        with open('remoteok_jobs.csv', newline='', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                matches_title = profile.preferred_title and profile.preferred_title.lower() in row['title'].lower()
+                matches_loc = profile.preferred_location and profile.preferred_location.lower() in row['company'].lower()
+                if matches_title or matches_loc:
+                    matched_jobs.append(row)
+    except Exception:
+        flash("❌ Could not load jobs. Please update your job CSV.")
+        return redirect(url_for('dashboard'))
+
+    applied, manual = 0, 0
+    python_exe = os.path.join(os.getcwd(), 'env', 'Scripts', 'python.exe')
+    apply_bot_path = os.path.join(os.getcwd(), 'apply_bot.py')
+
+    for job in matched_jobs:
+        job_url = job['link']
+        job_title = job['title']
+        job_company = job['company']
+        try:
+            subprocess.run([python_exe, apply_bot_path, job_url], check=True)
+            application = Application(
+                user_id=current_user.id,
+                job_title=job_title,
+                company=job_company,
+                link=job_url,
+                status='applied'
+            )
+            db.session.add(application)
+            db.session.commit()
+            applied += 1
+        except subprocess.CalledProcessError:
+            application = Application(
+                user_id=current_user.id,
+                job_title=job_title,
+                company=job_company,
+                link=job_url,
+                status='manual'
+            )
+            db.session.add(application)
+            db.session.commit()
+            manual += 1
+
+    flash(f"Batch apply complete: {applied} job(s) applied automatically, {manual} added to Manual Apply.")
     return redirect(url_for('dashboard'))
 
 ##########################################

@@ -27,6 +27,9 @@
       </li><br>
     {% endfor %}
     </ul>
+    <form action="{{ url_for('batch_apply') }}" method="POST">
+      <button type="submit">Batch Apply to All Matching Jobs</button>
+    </form>
   {% else %}
     <p>❌ No matching jobs found right now. Try updating your preferences!</p>
   {% endif %}
