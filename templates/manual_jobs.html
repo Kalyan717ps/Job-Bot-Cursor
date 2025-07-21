@@ -9,6 +9,7 @@
       <th>Job Title</th>
       <th>Company</th>
       <th>Link</th>
+      <th>Manual Reason</th>
       <th>Detected</th>
     </tr>
     {% for job in jobs %}
@@ -16,10 +17,11 @@
       <td>{{ job.job_title }}</td>
       <td>{{ job.company }}</td>
       <td><a href="{{ job.link }}" target="_blank">Open</a></td>
+      <td style="color:#d9534f;">{{ job.reason or 'N/A' }}</td>
       <td>{{ job.timestamp.strftime('%d %b %Y %H:%M') }}</td>
     </tr>
     {% else %}
-      <tr><td colspan="4">No manual jobs found. Great job bot!</td></tr>
+      <tr><td colspan="5">No manual jobs found. Great job bot!</td></tr>
     {% endfor %}
   </table>
 </body>

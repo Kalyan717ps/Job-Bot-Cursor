@@ -28,7 +28,8 @@ def apply_to_job(job_url):
         driver.quit()
         sys.exit(0)
     except Exception as e:
-        print(f"⚠️ Could not apply: {e}")
+        reason = f"No application form found: {e}"
+        print(reason)
         driver.quit()
         sys.exit(2)
 

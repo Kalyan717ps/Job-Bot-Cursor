@@ -1,38 +1,32 @@
 # Python
 __pycache__/
 *.py[cod]
-*.so
-*.egg
-*.egg-info/
-dist/
-build/
-*.manifest
-*.spec
+*.pyo
+*.pyd
 
-# Jupyter Notebooks
-.ipynb_checkpoints
-
-# Environments
+# Virtual environments
 env/
+evn/
+.venv/
+.ENV/
+.env/
 venv/
-ENV/
-
-# VS Code
-.vscode/
 
 # OS files
 .DS_Store
 Thumbs.db
 
-# CSV and database files
-*.csv
-database.db
+# VSCode
+.vscode/
 
-# ChromeDriver
-chromedriver-win64/
+# Pytest
+.pytest_cache/
 
-# Static uploads
-static/uploads/
+# Jupyter
+.ipynb_checkpoints/
 
-# HTML page sources
-page_source.html
+# Logs
+*.log
+
+# Local settings
+instance/

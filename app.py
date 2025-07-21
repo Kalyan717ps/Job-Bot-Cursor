@@ -222,17 +222,24 @@ def batch_apply():
             if job['link'] in applied_links:
                 continue  # Skip already-applied jobs
             try:
-                result = subprocess.run([python_exe, bot_path, job['link']])
-                status = 'applied' if result.returncode == 0 else 'manual'
-            except:
+                result = subprocess.run([python_exe, bot_path, job['link']], capture_output=True, text=True)
+                if result.returncode == 0:
+                    status = 'applied'
+                    reason = None
+                else:
+                    status = 'manual'
+                    reason = result.stdout.strip().split('\n')[-1]  # Last print line from the bot
+            except Exception as e:
                 status = 'manual'
+                reason = f'Error: {e}'
 
             app_log = Application(
                 user_id=current_user.id,
                 job_title=job['title'],
                 company=job['company'],
                 link=job['link'],
-                status=status
+                status=status,
+                reason=reason
             )
             db.session.add(app_log)
             db.session.commit()
