@@ -41,11 +41,15 @@
       <ul id="jobList">
         {% for job in jobs %}
         <li class="job-item" data-title="{{ job.title }}" data-company="{{ job.company }}" data-location="{{ job.location }}">
-          <input type="checkbox" name="job_links" value="{{ job.link }}" checked>
+          <input type="checkbox" name="job_links" value="{{ job.link }}" checked
+                 {% if job.link in applied_links %} disabled {% endif %}>
           <strong class="job-title">{{ job.title }}</strong> @
           <span class="job-company">{{ job.company }}</span> -
           <span class="job-location">{{ job.location }}</span><br>
           <a href="{{ job.link }}" target="_blank">View Job</a>
+          {% if job.link in applied_links %}
+            <span style="color:gray;">(Already applied)</span>
+          {% endif %}
         </li>
         {% endfor %}
       </ul>

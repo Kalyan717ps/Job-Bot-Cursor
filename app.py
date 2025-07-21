@@ -197,6 +197,12 @@ def apply():
 def batch_apply():
     profile = UserProfile.query.filter_by(user_id=current_user.id).first()
 
+    # Get all links the user has already applied to (applied or manual)
+    applied_links = set(
+        app.link for app in Application.query.filter_by(user_id=current_user.id).all()
+        if app.status in ["applied", "manual"]
+    )
+
     if request.method == 'POST':
         job_links = request.form.getlist('job_links')
         applied_count = 0
@@ -213,6 +219,8 @@ def batch_apply():
         bot_path = os.path.join(os.getcwd(), 'apply_bot.py')
 
         for job in jobs_to_apply:
+            if job['link'] in applied_links:
+                continue  # Skip already-applied jobs
             try:
                 result = subprocess.run([python_exe, bot_path, job['link']])
                 status = 'applied' if result.returncode == 0 else 'manual'
@@ -244,7 +252,7 @@ def batch_apply():
     except:
         flash("⚠️ Could not load jobs. Try again later.")
 
-    return render_template('batch_apply.html', jobs=all_jobs)
+    return render_template('batch_apply.html', jobs=all_jobs, applied_links=applied_links)
 
 @app.route('/applications')
 @login_required
