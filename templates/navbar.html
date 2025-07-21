@@ -1,0 +1,28 @@
+<style>
+  nav {
+    position: sticky;
+    top: 0;
+    background: #f5f5f5;
+    padding: 12px 20px;
+    border-bottom: 1px solid #ccc;
+    z-index: 1000;
+  }
+  nav a {
+    margin-right: 15px;
+    text-decoration: none;
+    font-weight: bold;
+    color: #333;
+  }
+  nav a:hover {
+    color: #0066cc;
+  }
+</style>
+
+<nav>
+  <a href="{{ url_for('dashboard') }}">🏠 Dashboard</a>
+  <a href="{{ url_for('batch_apply') }}">🚀 Batch Apply</a>
+  <a href="{{ url_for('applications') }}">📋 Applications</a>
+  <a href="{{ url_for('manual_jobs') }}">🛠 Manual Apply</a>
+  <a href="{{ url_for('profile') }}">👤 Profile</a>
+  <a href="{{ url_for('logout') }}">🚪 Logout</a>
+</nav> 
