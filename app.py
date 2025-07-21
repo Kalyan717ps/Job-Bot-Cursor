@@ -180,62 +180,71 @@ def apply():
 
     return redirect(url_for('dashboard'))
 
-@app.route('/batch-apply', methods=['POST', 'GET'])
+@app.route('/batch-apply', methods=['GET', 'POST'])
 @login_required
 def batch_apply():
     profile = UserProfile.query.filter_by(user_id=current_user.id).first()
-    if not profile:
-        flash("🚨 Please complete your profile first.")
-        return redirect(url_for('profile'))
 
-    # Load personalized jobs
-    matched_jobs = []
-    try:
-        with open('remoteok_jobs.csv', newline='', encoding='utf-8') as csvfile:
-            reader = csv.DictReader(csvfile)
+    if request.method == 'POST':
+        job_links = request.form.getlist('job_links')
+        applied_count = 0
+        manual_count = 0
+
+        # Load all jobs and match selected
+        jobs_to_apply = []
+        with open('remoteok_jobs.csv', newline='', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
             for row in reader:
-                matches_title = profile.preferred_title and profile.preferred_title.lower() in row['title'].lower()
-                matches_loc = profile.preferred_location and profile.preferred_location.lower() in row['company'].lower()
-                if matches_title or matches_loc:
-                    matched_jobs.append(row)
-    except Exception:
-        flash("❌ Could not load jobs. Please update your job CSV.")
+                if row['link'] in job_links:
+                    jobs_to_apply.append(row)
+
+        # Python path and ChromeBot path
+        python_exe = os.path.join(os.getcwd(), 'env', 'Scripts', 'python.exe')
+        apply_bot_path = os.path.join(os.getcwd(), 'apply_bot.py')
+
+        for job in jobs_to_apply:
+            link = job['link']
+            title = job['title']
+            company = job['company']
+
+            try:
+                result = subprocess.run([python_exe, apply_bot_path, link])
+                # 0 = success, else manual
+                status = 'applied' if result.returncode == 0 else 'manual'
+            except Exception as e:
+                print(f"Error applying to job: {e}")
+                status = 'manual'
+
+            # Save to DB
+            application = Application(
+                user_id=current_user.id,
+                job_title=title,
+                company=company,
+                link=link,
+                status=status
+            )
+            db.session.add(application)
+            db.session.commit()
+
+            if status == 'applied':
+                applied_count += 1
+            else:
+                manual_count += 1
+
+        flash(f"✅ Batch apply complete: {applied_count} applied, {manual_count} sent to manual apply.")
         return redirect(url_for('dashboard'))
 
-    applied, manual = 0, 0
-    python_exe = os.path.join(os.getcwd(), 'env', 'Scripts', 'python.exe')
-    apply_bot_path = os.path.join(os.getcwd(), 'apply_bot.py')
+    # GET: Show the form
+    matched_jobs = []
+    if profile:
+        with open('remoteok_jobs.csv', newline='', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if profile.preferred_title.lower() in row['title'].lower() or \
+                   profile.preferred_location.lower() in row['company'].lower():
+                    matched_jobs.append(row)
 
-    for job in matched_jobs:
-        job_url = job['link']
-        job_title = job['title']
-        job_company = job['company']
-        try:
-            subprocess.run([python_exe, apply_bot_path, job_url], check=True)
-            application = Application(
-                user_id=current_user.id,
-                job_title=job_title,
-                company=job_company,
-                link=job_url,
-                status='applied'
-            )
-            db.session.add(application)
-            db.session.commit()
-            applied += 1
-        except subprocess.CalledProcessError:
-            application = Application(
-                user_id=current_user.id,
-                job_title=job_title,
-                company=job_company,
-                link=job_url,
-                status='manual'
-            )
-            db.session.add(application)
-            db.session.commit()
-            manual += 1
-
-    flash(f"Batch apply complete: {applied} job(s) applied automatically, {manual} added to Manual Apply.")
-    return redirect(url_for('dashboard'))
+    return render_template('batch_apply.html', jobs=matched_jobs)
 
 @app.route('/applications')
 @login_required
