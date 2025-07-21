@@ -2,49 +2,51 @@
 <html>
 <head>
   <title>Batch Apply</title>
-  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
   {% include 'navbar.html' %}
 </head>
 <body>
   <h2>📦 Batch Apply to Matching Jobs</h2>
-  <p>
-    <a href="{{ url_for('dashboard') }}">Dashboard</a> |
-    <a href="{{ url_for('manual_jobs') }}">Manual Apply</a> |
-    <a href="{{ url_for('applications') }}">Applications</a>
-  </p>
 
   {% if jobs %}
-    <!-- Dropdown Filters -->
-    <p>
-      <label>Filter by Job Titles:</label><br>
-      <select id="titleFilter" multiple style="width: 300px;">
+    <!-- Filter Controls -->
+    <div style="margin-bottom: 15px;">
+      <label for="titleFilter">Filter by Job Title:</label>
+      <select id="titleFilter" multiple="multiple" style="width: 250px;">
         {% for job in jobs|unique(attribute='title') %}
-          <option value="{{ job.title|lower }}">{{ job.title }}</option>
+          <option value="{{ job.title }}">{{ job.title }}</option>
         {% endfor %}
       </select>
-    </p>
-    <p>
-      <label>Filter by Company:</label><br>
-      <select id="companyFilter" multiple style="width: 300px;">
+
+      <label for="companyFilter" style="margin-left:20px;">Filter by Company:</label>
+      <select id="companyFilter" multiple="multiple" style="width: 250px;">
         {% for job in jobs|unique(attribute='company') %}
-          <option value="{{ job.company|lower }}">{{ job.company }}</option>
+          <option value="{{ job.company }}">{{ job.company }}</option>
         {% endfor %}
       </select>
-    </p>
+
+      <label for="locationFilter" style="margin-left:20px;">Filter by Location:</label>
+      <select id="locationFilter" multiple="multiple" style="width: 250px;">
+        {% for job in jobs|unique(attribute='location') %}
+          <option value="{{ job.location }}">{{ job.location }}</option>
+        {% endfor %}
+      </select>
+    </div>
     <form method="POST">
       <p>
         <input type="checkbox" id="selectAll"> <label for="selectAll">Select All Jobs</label>
       </p>
-      <ul>
+      <ul id="jobList">
         {% for job in jobs %}
-        <li class="job-item" data-title="{{ job.title|lower }}" data-company="{{ job.company|lower }}">
+        <li class="job-item" data-title="{{ job.title }}" data-company="{{ job.company }}" data-location="{{ job.location }}">
           <input type="checkbox" name="job_links" value="{{ job.link }}" checked>
           <strong class="job-title">{{ job.title }}</strong> @
-          <span class="job-company">{{ job.company }}</span><br>
+          <span class="job-company">{{ job.company }}</span> -
+          <span class="job-location">{{ job.location }}</span><br>
           <a href="{{ job.link }}" target="_blank">View Job</a>
-        </li><br>
+        </li>
         {% endfor %}
       </ul>
       <button type="submit">🚀 Apply Selected Jobs</button>
@@ -55,28 +57,28 @@
 
   <script>
   $(document).ready(function() {
-    $('#titleFilter, #companyFilter').select2({ placeholder: "Filter", allowClear: true });
+    $('#titleFilter').select2({ placeholder: 'Job Title', allowClear: true });
+    $('#companyFilter').select2({ placeholder: 'Company', allowClear: true });
+    $('#locationFilter').select2({ placeholder: 'Location', allowClear: true });
 
-    $('#titleFilter, #companyFilter').change(function () {
-      filterJobs();
-    });
+    $('#titleFilter, #companyFilter, #locationFilter').on('change', filterJobs);
 
     function filterJobs() {
       let selectedTitles = $('#titleFilter').val() || [];
       let selectedCompanies = $('#companyFilter').val() || [];
+      let selectedLocations = $('#locationFilter').val() || [];
 
       $('.job-item').each(function () {
         let title = $(this).data('title');
         let company = $(this).data('company');
+        let location = $(this).data('location');
 
-        let titleMatch = selectedTitles.length === 0 || selectedTitles.includes(title);
-        let companyMatch = selectedCompanies.length === 0 || selectedCompanies.includes(company);
+        let show =
+          (selectedTitles.length === 0 || selectedTitles.includes(title)) &&
+          (selectedCompanies.length === 0 || selectedCompanies.includes(company)) &&
+          (selectedLocations.length === 0 || selectedLocations.includes(location));
 
-        if (titleMatch && companyMatch) {
-          $(this).show();
-        } else {
-          $(this).hide();
-        }
+        $(this).toggle(show);
       });
     }
 
