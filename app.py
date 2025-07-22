@@ -10,6 +10,8 @@ import csv
 from models import UserProfile, Application
 import subprocess
 from datetime import datetime, timedelta
+from io import StringIO
+from flask import Response
 
 # STEP 1: CREATE Flask app
 app = Flask(__name__)
@@ -318,6 +320,29 @@ def clear_log():
     session['job_log'] = []
     flash("🧹 Log cleared.")
     return redirect(url_for('dashboard'))
+
+@app.route('/export-applications')
+@login_required
+def export_applications():
+    applications = Application.query.filter_by(user_id=current_user.id).order_by(Application.timestamp.desc()).all()
+
+    # Create CSV in memory
+    output = StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['Title', 'Company', 'Link', 'Status', 'Timestamp'])
+
+    for job in applications:
+        writer.writerow([
+            job.job_title,
+            job.company,
+            job.link,
+            job.status,
+            job.timestamp.strftime('%Y-%m-%d %H:%M')
+        ])
+
+    output.seek(0)
+    return Response(output, content_type='text/csv',
+                    headers={'Content-Disposition': 'attachment; filename=applications.csv'})
 
 ##########################################
 # MAIN
