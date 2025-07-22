@@ -9,6 +9,7 @@ from werkzeug.utils import secure_filename
 import csv
 from models import UserProfile, Application
 import subprocess
+from datetime import datetime, timedelta
 
 # STEP 1: CREATE Flask app
 app = Flask(__name__)
@@ -95,33 +96,41 @@ def load_user(user_id):
 @app.route('/')
 @login_required
 def dashboard():
-    # Get current user's profile
     profile = UserProfile.query.filter_by(user_id=current_user.id).first()
-    
-    # Fallback if profile isn't completed yet
-    if not profile:
-        flash("🚨 Please complete your profile first.")
-        return redirect(url_for('profile'))
 
+    # Load only jobs matching title/location preferences
     matched_jobs = []
-
-    try:
-        with open("remoteok_jobs.csv", newline='', encoding='utf-8') as csvfile:
+    if profile:
+        with open('remoteok_jobs.csv', newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
-                job_title = row['title'].lower()
-                job_company = row['company'].lower()
-                print(job_title, job_company)  # Debug: See what jobs are being read
-
-                # Looser match: show jobs if either field matches
-                if (profile.preferred_title.lower() in job_title) or (profile.preferred_location.lower() in job_company):
+                title_match = profile.preferred_title.lower() in row['title'].lower() \
+                                if profile.preferred_title else True
+                loc_match = profile.preferred_location.lower() in row['company'].lower() \
+                                if profile.preferred_location else True
+                if title_match or loc_match:
                     matched_jobs.append(row)
-    except Exception as e:
-        print(f"Error reading jobs: {e}")
-        flash("❌ Could not load jobs. Make sure remoteok_jobs.csv exists.")
-        matched_jobs = []
 
-    return render_template("dashboard.html", profile=profile, jobs=matched_jobs)
+    # 🧠 Gather Stats
+    user_apps = Application.query.filter_by(user_id=current_user.id).all()
+
+    applied_auto_count = sum(1 for job in user_apps if job.status == 'applied')
+    applied_manual_count = sum(1 for job in user_apps if job.status == 'applied_manual')
+    applied_total = applied_auto_count + applied_manual_count
+
+    manual_pending_count = sum(1 for job in user_apps if job.status == 'manual')
+
+    now = datetime.utcnow()
+    one_week_ago = now - timedelta(days=7)
+    applied_this_week = sum(1 for job in user_apps if job.status in ['applied', 'applied_manual'] and job.timestamp > one_week_ago)
+
+    return render_template('dashboard.html',
+                            jobs=matched_jobs,
+                            stats={
+                                'applied_total': applied_total,
+                                'applied_this_week': applied_this_week,
+                                'manual_pending': manual_pending_count
+                            })
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():

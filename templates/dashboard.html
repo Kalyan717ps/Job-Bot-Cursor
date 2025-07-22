@@ -4,21 +4,42 @@
   <meta charset="utf-8">
   <title>Dashboard</title>
   {% include 'navbar.html' %}
+  <style>
+    ul.stats {
+      list-style-type: none;
+      padding: 0;
+      font-size: 1.1em;
+    }
+    ul.stats li {
+      padding: 6px 0;
+    }
+  </style>
 </head>
 <body>
-  <h2>This is your personalized job dashboard.</h2>
+  <h2>📊 Your Dashboard</h2>
 
+  <!-- 📈 Stats Section -->
+  <div style="border:1px solid #ccc; padding:15px; margin-bottom:20px;">
+    <h3 style="margin-top:0;">📈 Application Stats</h3>
+    <ul class="stats">
+      <li><strong>✅ Total Jobs Applied:</strong> {{ stats.applied_total }}</li>
+      <li><strong>📆 Applied This Week:</strong> {{ stats.applied_this_week }}</li>
+      <li><strong>🛠 Manual Apply Left:</strong> {{ stats.manual_pending }}</li>
+    </ul>
+  </div>
+
+  <h3>🎯 Matching Jobs</h3>
   {% if jobs %}
     <ul>
       {% for job in jobs %}
-      <li>
-        <strong>{{ job.title }}</strong> @ {{ job.company }}<br>
-        <a href="{{ job.link }}" target="_blank">View Job</a>
-      </li>
+        <li>
+          <strong>{{ job.title }}</strong> @ {{ job.company }}<br>
+          <a href="{{ job.link }}" target="_blank">View Job</a>
+        </li>
       {% endfor %}
     </ul>
   {% else %}
-    <p>❌ No matching jobs found right now. Try updating your preferences!</p>
+    <p>No matching jobs found.</p>
   {% endif %}
 
   {% if session.job_log %}
