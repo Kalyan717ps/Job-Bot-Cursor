@@ -135,17 +135,38 @@ def dashboard():
             except Exception:
                 continue
 
+    # Compute application counts per week for last 4 weeks
+    applications = Application.query.filter_by(user_id=current_user.id).all()
+
+    # Prepare week labels and counts
+    week_counts = []
+    week_labels = []
+    for i in range(4, 0, -1):
+        start_of_week = now - timedelta(weeks=i)
+        end_of_week = now - timedelta(weeks=i-1)
+        
+        # Count jobs within the week
+        count = sum(1 for job in applications if start_of_week <= job.timestamp < end_of_week and job.status in ('applied', 'applied_manual'))
+        
+        # Create a user-friendly label
+        label = f"Week of {start_of_week.strftime('%b %d')}"
+        
+        week_counts.append(count)
+        week_labels.append(label)
+
     return render_template(
         'dashboard.html',
         jobs=matched_jobs,
         recent_jobs_day=recent_jobs_day,
         recent_jobs_week=recent_jobs_week,
-        profile=profile,  # Pass profile to template
+        profile=profile,
         stats={
             'applied_total': applied_total,
             'applied_this_week': applied_this_week,
             'manual_pending': manual_pending_count
-        }
+        },
+        week_counts=week_counts,
+        week_labels=week_labels
     )
 
 @app.route('/register', methods=['GET', 'POST'])

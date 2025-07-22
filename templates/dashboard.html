@@ -60,6 +60,54 @@
       </ul>
   </div>
 
+  <!-- Weekly Application Trends Chart -->
+  <h3>📊 Weekly Applications</h3>
+  <div style="margin-bottom: 20px;">
+    <canvas id="weeklyChart" width="400" height="150"></canvas>
+  </div>
+
+  <!-- Inject Jinja variables into window object before main chart.js script -->
+  <script>
+    window.WEEKLY_LABELS = {{ week_labels|tojson }};
+    window.WEEKLY_COUNTS = {{ week_counts|tojson }};
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const labels = window.WEEKLY_LABELS;
+    const counts = window.WEEKLY_COUNTS;
+
+    const ctx = document.getElementById('weeklyChart').getContext('2d');
+    const weeklyChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Applications per Week',
+                data: counts,
+                backgroundColor: '#3a8fff',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0 // Ensure y-axis labels are integers
+                    }
+                }
+            }
+        }
+    });
+  </script>
+
   <h3>🎯 Matching Jobs</h3>
   {% if jobs %}
     <ul>
