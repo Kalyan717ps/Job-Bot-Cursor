@@ -16,6 +16,15 @@
   </style>
 </head>
 <body>
+  {% if profile and profile.resume_filename %}
+    <div style="background:#e8f4fc; border: 1px solid #22aaff; padding:10px; margin-bottom:20px;">
+      <strong>Resume on File:</strong>
+      <a href="{{ url_for('view_resume', filename=profile.resume_filename) }}" target="_blank">
+        📄 View / Download Resume
+      </a>
+    </div>
+  {% endif %}
+
   <h2>📊 Your Dashboard</h2>
 
   <!-- 📈 Stats Section -->

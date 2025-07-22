@@ -12,6 +12,7 @@ import subprocess
 from datetime import datetime, timedelta
 from io import StringIO
 from flask import Response
+from flask import send_from_directory
 
 # STEP 1: CREATE Flask app
 app = Flask(__name__)
@@ -32,8 +33,6 @@ def allowed_file(filename):
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    from models import UserProfile, db
-
     profile = UserProfile.query.filter_by(user_id=current_user.id).first()
 
     # Load jobs for select options
@@ -53,7 +52,7 @@ def profile():
         preferred_titles = ','.join(titles)
         preferred_locations = ','.join(locations)
 
-        filename = profile.resume_filename if profile else None
+        filename = profile.resume_filename if profile and profile.resume_filename else None
 
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
@@ -141,6 +140,7 @@ def dashboard():
         jobs=matched_jobs,
         recent_jobs_day=recent_jobs_day,
         recent_jobs_week=recent_jobs_week,
+        profile=profile,  # Pass profile to template
         stats={
             'applied_total': applied_total,
             'applied_this_week': applied_this_week,
@@ -351,6 +351,16 @@ def export_applications():
         content_type='text/csv',
         headers={'Content-Disposition': 'attachment; filename=applications.csv'}
     )
+
+@app.route('/resume/<filename>')
+@login_required
+def view_resume(filename):
+    # Ensure the user can only access their own resume
+    profile = UserProfile.query.filter_by(user_id=current_user.id).first()
+    if profile and profile.resume_filename == filename:
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    flash("❌ You are not authorized to view this resume.")
+    return redirect(url_for('dashboard'))
 
 ##########################################
 # MAIN

@@ -45,10 +45,16 @@
       {% endfor %}
     </select><br><br>
 
-    <label for="resume">Resume Upload (PDF/DOCX):</label><br>
     {% if profile and profile.resume_filename %}
-      <p>Current: {{ profile.resume_filename }}</p>
+      <div style="margin-bottom:15px;">
+        <strong>Your Resume:</strong>
+        <a href="{{ url_for('view_resume', filename=profile.resume_filename) }}" target="_blank">
+          🧾 View / Download Resume
+        </a>
+      </div>
     {% endif %}
+
+    <label for="resume">Resume Upload (PDF/DOCX):</label><br>
     <input type="file" name="resume"><br><br>
 
     <button type="submit">Save Profile</button>
