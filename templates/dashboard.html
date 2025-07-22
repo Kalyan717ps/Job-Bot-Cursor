@@ -28,6 +28,23 @@
     </ul>
   </div>
 
+  <!-- 🆕 New Jobs Panel -->
+  <h3>🆕 New Jobs Added</h3>
+  <div style="border:1px solid #007BFF; padding:15px; margin-bottom:20px;">
+      <strong>{{ recent_jobs_day|length }} new jobs in the last 24 hours:</strong>
+      <ul>
+        {% for job in recent_jobs_day %}
+          <li><a href="{{ job.link }}" target="_blank">{{ job.title }}</a> at {{ job.company }}</li>
+        {% endfor %}
+      </ul>
+      <strong>{{ recent_jobs_week|length }} new jobs in the last week:</strong>
+      <ul>
+        {% for job in recent_jobs_week %}
+          <li><a href="{{ job.link }}" target="_blank">{{ job.title }}</a> at {{ job.company }}</li>
+        {% endfor %}
+      </ul>
+  </div>
+
   <h3>🎯 Matching Jobs</h3>
   {% if jobs %}
     <ul>

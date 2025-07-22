@@ -97,8 +97,6 @@ def load_user(user_id):
 @login_required
 def dashboard():
     profile = UserProfile.query.filter_by(user_id=current_user.id).first()
-
-    # Load only jobs matching title/location preferences
     matched_jobs = []
     if profile:
         with open('remoteok_jobs.csv', newline='', encoding='utf-8') as csvfile:
@@ -113,24 +111,40 @@ def dashboard():
 
     # 🧠 Gather Stats
     user_apps = Application.query.filter_by(user_id=current_user.id).all()
-
     applied_auto_count = sum(1 for job in user_apps if job.status == 'applied')
     applied_manual_count = sum(1 for job in user_apps if job.status == 'applied_manual')
     applied_total = applied_auto_count + applied_manual_count
-
     manual_pending_count = sum(1 for job in user_apps if job.status == 'manual')
-
     now = datetime.utcnow()
     one_week_ago = now - timedelta(days=7)
     applied_this_week = sum(1 for job in user_apps if job.status in ['applied', 'applied_manual'] and job.timestamp > one_week_ago)
 
-    return render_template('dashboard.html',
-                            jobs=matched_jobs,
-                            stats={
-                                'applied_total': applied_total,
-                                'applied_this_week': applied_this_week,
-                                'manual_pending': manual_pending_count
-                            })
+    # NEW: Load all jobs and filter for recent ones
+    recent_jobs_day, recent_jobs_week = [], []
+    one_day_ago = now - timedelta(days=1)
+    with open('remoteok_jobs.csv', newline='', encoding='utf-8') as file:
+        reader = csv.DictReader(file)
+        for job in reader:
+            try:
+                job_date = datetime.strptime(job['date'], '%Y-%m-%d')
+                if job_date >= one_day_ago:
+                    recent_jobs_day.append(job)
+                if job_date >= one_week_ago:
+                    recent_jobs_week.append(job)
+            except Exception:
+                continue
+
+    return render_template(
+        'dashboard.html',
+        jobs=matched_jobs,
+        recent_jobs_day=recent_jobs_day,
+        recent_jobs_week=recent_jobs_week,
+        stats={
+            'applied_total': applied_total,
+            'applied_this_week': applied_this_week,
+            'manual_pending': manual_pending_count
+        }
+    )
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
