@@ -324,14 +324,18 @@ def clear_log():
 @app.route('/export-applications')
 @login_required
 def export_applications():
-    applications = Application.query.filter_by(user_id=current_user.id).order_by(Application.timestamp.desc()).all()
+    # Filter only actually applied jobs
+    applied_jobs = Application.query.filter(
+        Application.user_id == current_user.id,
+        Application.status.in_(['applied', 'applied_manual'])
+    ).order_by(Application.timestamp.desc()).all()
 
-    # Create CSV in memory
+    # Create CSV content
     output = StringIO()
     writer = csv.writer(output)
     writer.writerow(['Title', 'Company', 'Link', 'Status', 'Timestamp'])
 
-    for job in applications:
+    for job in applied_jobs:
         writer.writerow([
             job.job_title,
             job.company,
@@ -340,9 +344,13 @@ def export_applications():
             job.timestamp.strftime('%Y-%m-%d %H:%M')
         ])
 
+    # Return CSV download
     output.seek(0)
-    return Response(output, content_type='text/csv',
-                    headers={'Content-Disposition': 'attachment; filename=applications.csv'})
+    return Response(
+        output,
+        content_type='text/csv',
+        headers={'Content-Disposition': 'attachment; filename=applications.csv'}
+    )
 
 ##########################################
 # MAIN
