@@ -10,19 +10,22 @@
         <th>Job Title</th>
         <th>Company</th>
         <th>Link</th>
-        <th>Detected</th>
+        <th>Mark Done</th>
       </tr>
     </thead>
     <tbody>
       {% for job in jobs %}
-        {% if job.status == 'manual' %}
-          <tr>
-            <td>{{ job.job_title }}</td>
-            <td>{{ job.company }}</td>
-            <td><a href="{{ job.link }}" target="_blank">View</a></td>
-            <td>{{ job.timestamp.strftime('%d %b %Y %H:%M') }}</td>
-          </tr>
-        {% endif %}
+        <tr>
+          <td>{{ job.job_title }}</td>
+          <td>{{ job.company }}</td>
+          <td><a href="{{ job.link }}" target="_blank">View</a></td>
+          <td>
+            <form method="POST" style="display:inline;">
+              <input type="hidden" name="job_id" value="{{ job.id }}">
+              <button type="submit">✔ Done</button>
+            </form>
+          </td>
+        </tr>
       {% else %}
         <tr>
           <td colspan="4">No manual jobs found. Great job bot!</td>

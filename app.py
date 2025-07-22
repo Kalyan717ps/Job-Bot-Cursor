@@ -251,10 +251,20 @@ def applications():
     user_applied_jobs = Application.query.filter_by(user_id=current_user.id).order_by(Application.timestamp.desc()).all()
     return render_template('applications.html', applications=user_applied_jobs)
 
-@app.route('/manual-jobs')
+@app.route('/manual-jobs', methods=['GET', 'POST'])
 @login_required
 def manual_jobs():
-    manual_jobs = Application.query.filter_by(user_id=current_user.id, status='manual').order_by(Application.timestamp.desc()).all()
+    if request.method == 'POST':
+        job_id = request.form.get('job_id')
+        job = Application.query.get(job_id)
+        if job and job.user_id == current_user.id and job.status == 'manual':
+            job.status = 'applied_manual'
+            db.session.commit()
+            flash("✅ Marked as manually applied.")
+        return redirect(url_for('manual_jobs'))
+
+    manual_jobs = Application.query.filter_by(user_id=current_user.id, status='manual') \
+                                   .order_by(Application.timestamp.desc()).all()
     return render_template('manual_jobs.html', jobs=manual_jobs)
 
 ##########################################

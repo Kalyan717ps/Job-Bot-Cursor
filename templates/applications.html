@@ -3,34 +3,40 @@
 <head><title>All Applications</title></head>
 {% include 'navbar.html' %}
 <body>
-  <h2>Your Job Application History</h2>
+  <h2>📋 Applied Jobs</h2>
+
+  <h3>✅ Applied Automatically</h3>
   <table border="1" cellpadding="8">
-    <thead>
+    <tr>
+      <th>Title</th><th>Company</th><th>Link</th><th>Date</th>
+    </tr>
+    {% for job in applications %}
+      {% if job.status == 'applied' %}
       <tr>
-        <th>Job Title</th>
-        <th>Company</th>
-        <th>Status</th>
-        <th>Link</th>
-        <th>Applied At</th>
+        <td>{{ job.job_title }}</td>
+        <td>{{ job.company }}</td>
+        <td><a href="{{ job.link }}" target="_blank">View</a></td>
+        <td>{{ job.timestamp.strftime('%d %b %Y %H:%M') }}</td>
       </tr>
-    </thead>
-    <tbody>
-      {% for job in applications %}
-        {% if job.status == 'applied' %}
-          <tr>
-            <td>{{ job.job_title }}</td>
-            <td>{{ job.company }}</td>
-            <td><strong>{{ job.status.upper() }}</strong></td>
-            <td><a href="{{ job.link }}" target="_blank">View</a></td>
-            <td>{{ job.timestamp.strftime('%d %b %Y %H:%M') }}</td>
-          </tr>
-        {% endif %}
-      {% else %}
-        <tr>
-          <td colspan="5">You haven't applied to any jobs yet.</td>
-        </tr>
-      {% endfor %}
-    </tbody>
+      {% endif %}
+    {% endfor %}
+  </table>
+
+  <h3>✍️ Applied Manually</h3>
+  <table border="1" cellpadding="8">
+    <tr>
+      <th>Title</th><th>Company</th><th>Link</th><th>Date</th>
+    </tr>
+    {% for job in applications %}
+      {% if job.status == 'applied_manual' %}
+      <tr>
+        <td>{{ job.job_title }}</td>
+        <td>{{ job.company }}</td>
+        <td><a href="{{ job.link }}" target="_blank">View</a></td>
+        <td>{{ job.timestamp.strftime('%d %b %Y %H:%M') }}</td>
+      </tr>
+      {% endif %}
+    {% endfor %}
   </table>
 </body>
 </html> 
