@@ -25,6 +25,12 @@
     </div>
   {% endif %}
 
+  <form action="{{ url_for('refresh_jobs') }}" method="get" style="display:inline; float:right; margin-top:10px;">
+    <button type="submit" style="background:#3a8fff; color:#fff; border:none; padding:8px 16px; border-radius:4px;">
+      🔄 Refresh Job List
+    </button>
+  </form>
+
   <h2>📊 Your Dashboard</h2>
 
   <!-- 📈 Stats Section -->

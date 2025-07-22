@@ -362,6 +362,21 @@ def view_resume(filename):
     flash("❌ You are not authorized to view this resume.")
     return redirect(url_for('dashboard'))
 
+@app.route('/refresh-jobs')
+@login_required
+# Optionally, add admin check here if you want to restrict
+# @admin_required (if you have such a decorator)
+def refresh_jobs():
+    try:
+        result = subprocess.run(['python', 'scrape_jobs.py'], capture_output=True, text=True)
+        if result.returncode == 0:
+            flash("✅ Job list refreshed successfully.")
+        else:
+            flash(f"⚠️ Job refresh failed: {result.stdout or 'Unknown error'}")
+    except Exception as e:
+        flash(f"❌ Could not refresh jobs: {e}")
+    return redirect(url_for('dashboard'))
+
 ##########################################
 # MAIN
 ##########################################
