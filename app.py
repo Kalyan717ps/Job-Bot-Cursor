@@ -253,6 +253,15 @@ def batch_apply():
             db.session.add(app_entry)
             db.session.commit()
 
+            # ✅ Add logging to session:
+            if status == 'applied':
+                msg = f"🤖 Auto-applied to '{job['title']}' at {job['company']}."
+                session.setdefault('job_log', []).append(msg)
+            elif status == 'manual':
+                msg = f"⏭ Skipped '{job['title']}' ➝ added to manual apply."
+                session.setdefault('job_log', []).append(msg)
+            session.modified = True
+
             if status == 'applied':
                 applied += 1
             else:
