@@ -1,5 +1,5 @@
 # app.py - Flask backend server for Job Bot
-from flask import Flask, render_template, redirect, url_for, request, flash
+from flask import Flask, render_template, redirect, url_for, request, flash, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -254,11 +254,11 @@ def applications():
         if job and job.user_id == current_user.id and job.status == 'applied_manual':
             job.status = 'manual'
             db.session.commit()
-            flash("🔁 Job moved back to Manual Apply.")
+            session.setdefault('job_log', []).append(f"🗑 Removed '{job.job_title}' from applied.")
+            session.modified = True
         return redirect(url_for('applications'))
 
-    apps = Application.query.filter(Application.user_id == current_user.id) \
-                            .order_by(Application.timestamp.desc()).all()
+    apps = Application.query.filter(Application.user_id == current_user.id).order_by(Application.timestamp.desc()).all()
     return render_template('applications.html', applications=apps)
 
 @app.route('/manual-jobs', methods=['GET', 'POST'])
@@ -270,12 +270,22 @@ def manual_jobs():
         if job and job.user_id == current_user.id and job.status == 'manual':
             job.status = 'applied_manual'
             db.session.commit()
-            flash("✅ Marked as manually applied.")
+            if 'job_log' not in session:
+                session['job_log'] = []
+            session['job_log'].append(f"✔️ Marked '{job.job_title}' as done from manual.")
+            session.modified = True  # Force save
         return redirect(url_for('manual_jobs'))
 
-    manual_jobs = Application.query.filter_by(user_id=current_user.id, status='manual') \
-                                   .order_by(Application.timestamp.desc()).all()
-    return render_template('manual_jobs.html', jobs=manual_jobs)
+    manual_jobs_list = Application.query.filter_by(user_id=current_user.id, status='manual') \
+                                        .order_by(Application.timestamp.desc()).all()
+    return render_template('manual_jobs.html', jobs=manual_jobs_list)
+
+@app.route('/clear-log')
+@login_required
+def clear_log():
+    session['job_log'] = []
+    flash("🧹 Log cleared.")
+    return redirect(url_for('dashboard'))
 
 ##########################################
 # MAIN

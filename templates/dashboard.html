@@ -8,16 +8,6 @@
 <body>
   <h2>This is your personalized job dashboard.</h2>
 
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-      <ul>
-        {% for message in messages %}
-          <li>{{ message }}</li>
-        {% endfor %}
-      </ul>
-    {% endif %}
-  {% endwith %}
-
   {% if jobs %}
     <ul>
       {% for job in jobs %}
@@ -29,6 +19,18 @@
     </ul>
   {% else %}
     <p>❌ No matching jobs found right now. Try updating your preferences!</p>
+  {% endif %}
+
+  {% if session.job_log %}
+    <h3>📝 Log History</h3>
+    <ul>
+      {% for log in session.job_log[-10:] %}
+        <li>{{ log }}</li>
+      {% endfor %}
+    </ul>
+    <form action="{{ url_for('clear_log') }}" method="get" style="margin-top:10px;">
+      <button type="submit">🧹 Clear History</button>
+    </form>
   {% endif %}
 </body>
 </html> 
