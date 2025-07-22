@@ -25,7 +25,11 @@
   <h3>✍️ Applied Manually</h3>
   <table border="1" cellpadding="8">
     <tr>
-      <th>Title</th><th>Company</th><th>Link</th><th>Date</th>
+      <th>Job Title</th>
+      <th>Company</th>
+      <th>Link</th>
+      <th>Date</th>
+      <th>Undo</th>
     </tr>
     {% for job in applications %}
       {% if job.status == 'applied_manual' %}
@@ -34,6 +38,12 @@
         <td>{{ job.company }}</td>
         <td><a href="{{ job.link }}" target="_blank">View</a></td>
         <td>{{ job.timestamp.strftime('%d %b %Y %H:%M') }}</td>
+        <td>
+          <form method="POST">
+            <input type="hidden" name="job_id" value="{{ job.id }}">
+            <button type="submit" style="color:red;">🗑 Remove</button>
+          </form>
+        </td>
       </tr>
       {% endif %}
     {% endfor %}

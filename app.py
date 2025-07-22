@@ -245,11 +245,21 @@ def batch_apply():
 
     return render_template("batch_apply.html", jobs=all_jobs)
 
-@app.route('/applications')
+@app.route('/applications', methods=['GET', 'POST'])
 @login_required
 def applications():
-    user_applied_jobs = Application.query.filter_by(user_id=current_user.id).order_by(Application.timestamp.desc()).all()
-    return render_template('applications.html', applications=user_applied_jobs)
+    if request.method == 'POST':
+        job_id = request.form.get('job_id')
+        job = Application.query.get(job_id)
+        if job and job.user_id == current_user.id and job.status == 'applied_manual':
+            job.status = 'manual'
+            db.session.commit()
+            flash("🔁 Job moved back to Manual Apply.")
+        return redirect(url_for('applications'))
+
+    apps = Application.query.filter(Application.user_id == current_user.id) \
+                            .order_by(Application.timestamp.desc()).all()
+    return render_template('applications.html', applications=apps)
 
 @app.route('/manual-jobs', methods=['GET', 'POST'])
 @login_required

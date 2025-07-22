@@ -30,3 +30,10 @@ Thumbs.db
 
 # Local settings
 instance/
+
+# Data files
+*.csv
+page_source.html
+
+# Line endings
+# To avoid CRLF/LF warnings, configure core.autocrlf in git settings as needed
