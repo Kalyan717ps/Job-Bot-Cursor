@@ -35,20 +35,29 @@ def allowed_file(filename):
 def profile():
     profile = UserProfile.query.filter_by(user_id=current_user.id).first()
 
-    # Load jobs for select options
+    # Load jobs list for filter dropdowns
     jobs = []
     try:
         with open('remoteok_jobs.csv', newline='', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             jobs = list(reader)
-    except Exception:
+    except Exception as e:
+        print(f"Failed to load jobs: {e}")
         jobs = []
 
     if request.method == 'POST':
-        titles = request.form.getlist('title')
-        locations = request.form.getlist('location')
-        file = request.files.get('resume')
+        titles = request.form.getlist('title')           # Multi-select
+        locations = request.form.getlist('location')     # Multi-select
+        title_custom = request.form.get('title_custom', '')     # Custom titles
+        location_custom = request.form.get('location_custom', '')  # Custom companies
 
+        # Combine dropdown + custom entries
+        if title_custom:
+            titles += [t.strip() for t in title_custom.split(',') if t.strip()]
+        if location_custom:
+            locations += [l.strip() for l in location_custom.split(',') if l.strip()]
+
+        file = request.files.get('resume')
         preferred_titles = ','.join(titles)
         preferred_locations = ','.join(locations)
 
@@ -62,12 +71,14 @@ def profile():
             profile.preferred_title = preferred_titles
             profile.preferred_location = preferred_locations
             profile.resume_filename = filename
+            profile.updated_at = datetime.utcnow()
         else:
             profile = UserProfile(
                 user_id=current_user.id,
                 preferred_title=preferred_titles,
                 preferred_location=preferred_locations,
-                resume_filename=filename
+                resume_filename=filename,
+                updated_at=datetime.utcnow()
             )
             db.session.add(profile)
 
@@ -181,6 +192,8 @@ def register():
             return redirect(url_for('register'))
 
         new_user = User(
+            first_name=first_name,
+            last_name=last_name,
             email=email,
             password=generate_password_hash(password)
         )
