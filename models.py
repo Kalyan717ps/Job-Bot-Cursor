@@ -20,12 +20,14 @@ class User(UserMixin, db.Model):
 
 class UserProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    resume_filename = db.Column(db.String(255))
-    preferred_title = db.Column(db.String(255))
-    preferred_location = db.Column(db.String(255))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
 
-    user = db.relationship("User", backref="profile") 
+    preferred_title = db.Column(db.String(256))
+    preferred_location = db.Column(db.String(256))
+    resume_filename = db.Column(db.String(256))
+
+    # ✅ Add this:
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Application(db.Model):
     id = db.Column(db.Integer, primary_key=True)
