@@ -59,11 +59,7 @@
           <input name="last-name" type="text" value="{{ profile.last_name if profile else '' }}"
             class="input-blend mt-1 w-full rounded-md px-3 py-2 text-sm">
         </div>
-        <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-gray-700">Email</label>
-          <input name="email" type="email" value="{{ profile.email if profile else current_user.email }}"
-            class="input-blend mt-1 w-full rounded-md px-3 py-2 text-sm bg-gray-100 cursor-not-allowed" readonly>
-        </div>
+        
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-gray-700">Bio</label>
           <textarea name="bio" rows="4" class="input-blend mt-1 w-full rounded-md px-3 py-2 text-sm resize-none">{{ profile.bio if profile else '' }}</textarea>

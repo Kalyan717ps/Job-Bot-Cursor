@@ -105,104 +105,35 @@ def load_user(user_id):
 # ROUTES
 ##########################################
 
-@app.route('/')
-@login_required
-def dashboard():
-    profile = UserProfile.query.filter_by(user_id=current_user.id).first()
-    matched_jobs = []
-    if profile:
-        with open('remoteok_jobs.csv', newline='', encoding='utf-8') as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                title_match = profile.preferred_title.lower() in row['title'].lower() \
-                                if profile.preferred_title else True
-                loc_match = profile.preferred_location.lower() in row['company'].lower() \
-                                if profile.preferred_location else True
-                if title_match or loc_match:
-                    matched_jobs.append(row)
-
-    # 🧠 Gather Stats
-    user_apps = Application.query.filter_by(user_id=current_user.id).all()
-    applied_auto_count = sum(1 for job in user_apps if job.status == 'applied')
-    applied_manual_count = sum(1 for job in user_apps if job.status == 'applied_manual')
-    applied_total = applied_auto_count + applied_manual_count
-    manual_pending_count = sum(1 for job in user_apps if job.status == 'manual')
-    now = datetime.utcnow()
-    one_week_ago = now - timedelta(days=7)
-    applied_this_week = sum(1 for job in user_apps if job.status in ['applied', 'applied_manual'] and job.timestamp > one_week_ago)
-
-    # NEW: Load all jobs and filter for recent ones
-    recent_jobs_day, recent_jobs_week = [], []
-    one_day_ago = now - timedelta(days=1)
-    with open('remoteok_jobs.csv', newline='', encoding='utf-8') as file:
-        reader = csv.DictReader(file)
-        for job in reader:
-            try:
-                job_date = datetime.strptime(job['date'], '%Y-%m-%d')
-                if job_date >= one_day_ago:
-                    recent_jobs_day.append(job)
-                if job_date >= one_week_ago:
-                    recent_jobs_week.append(job)
-            except Exception:
-                continue
-
-    # Compute application counts per week for last 4 weeks
-    applications = Application.query.filter_by(user_id=current_user.id).all()
-
-    # Prepare week labels and counts
-    week_counts = []
-    week_labels = []
-    for i in range(4, 0, -1):
-        start_of_week = now - timedelta(weeks=i)
-        end_of_week = now - timedelta(weeks=i-1)
-        
-        # Count jobs within the week
-        count = sum(1 for job in applications if start_of_week <= job.timestamp < end_of_week and job.status in ('applied', 'applied_manual'))
-        
-        # Create a user-friendly label
-        label = f"Week of {start_of_week.strftime('%b %d')}"
-        
-        week_counts.append(count)
-        week_labels.append(label)
-
-    return render_template(
-        'dashboard.html',
-        jobs=matched_jobs,
-        recent_jobs_day=recent_jobs_day,
-        recent_jobs_week=recent_jobs_week,
-        profile=profile,
-        stats={
-            'applied_total': applied_total,
-            'applied_this_week': applied_this_week,
-            'manual_pending': manual_pending_count
-        },
-        week_counts=week_counts,
-        week_labels=week_labels
-    )
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        email = request.form.get('email')
+        password = request.form.get('password')
 
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
-            flash("Email already registered, try logging in.", 'warning')
+            flash("❌ Email is already registered.")
             return redirect(url_for('register'))
 
-        new_user = User(
+        user = User(
             first_name=first_name,
             last_name=last_name,
             email=email,
             password=generate_password_hash(password)
         )
-        db.session.add(new_user)
+        db.session.add(user)
         db.session.commit()
-        flash("Account created successfully. Please log in.", 'success')
-        return redirect(url_for('login'))
 
-    return render_template("register.html")
+        login_user(user)
+        flash("✅ Registration successful! Welcome.")
+        return redirect(url_for('dashboard'))
+
+    return render_template('register.html')
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -443,3 +374,74 @@ def mark_done(job_id):
         session.modified = True
 
     return redirect(url_for('manual_jobs'))
+
+from flask_login import login_required, current_user
+
+@app.route('/')
+@login_required
+def dashboard():
+    profile = UserProfile.query.filter_by(user_id=current_user.id).first()
+
+    # Match jobs based on preferences
+    matched_jobs = []
+    if profile:
+        with open('remoteok_jobs.csv', newline='', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                title_match = profile.preferred_title.lower() in row['title'].lower() if profile.preferred_title else True
+                loc_match = profile.preferred_location.lower() in row['company'].lower() if profile.preferred_location else True
+                if title_match or loc_match:
+                    matched_jobs.append(row)
+
+    # Stats
+    apps = Application.query.filter_by(user_id=current_user.id).all()
+    now = datetime.utcnow()
+    week_ago = now - timedelta(days=7)
+    day_ago = now - timedelta(days=1)
+
+    applied_auto_count = sum(1 for a in apps if a.status == 'applied')
+    applied_manual_count = sum(1 for a in apps if a.status == 'applied_manual')
+    manual_pending_count = sum(1 for a in apps if a.status == 'manual')
+    applied_this_week = sum(1 for a in apps if a.status in ['applied', 'applied_manual'] and a.timestamp > week_ago)
+
+    # Recent jobs
+    recent_jobs_day, recent_jobs_week = [], []
+    with open('remoteok_jobs.csv', newline='', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for job in reader:
+            try:
+                job_date = datetime.strptime(job['date'], '%Y-%m-%d')
+                if job_date >= day_ago:
+                    recent_jobs_day.append(job)
+                if job_date >= week_ago:
+                    recent_jobs_week.append(job)
+            except Exception:
+                continue
+
+    # Weekly chart
+    week_counts = []
+    week_labels = []
+    for i in range(4, 0, -1):
+        start = now - timedelta(weeks=i)
+        end = now - timedelta(weeks=i - 1)
+        count = sum(1 for a in apps if start <= a.timestamp < end and a.status in ['applied', 'applied_manual'])
+        label = f"Week of {start.strftime('%b %d')}"
+        week_labels.append(label)
+        week_counts.append(count)
+
+    # 👇 Return template — we pass `current_user` (though Flask-Login also provides it natively)
+    return render_template(
+        'dashboard.html',
+        user=current_user,
+        profile=profile,
+        jobs=matched_jobs,
+        stats={
+            'applied_total': applied_auto_count + applied_manual_count,
+            'applied_this_week': applied_this_week,
+            'manual_pending': manual_pending_count
+        },
+        recent_jobs_day=recent_jobs_day,
+        recent_jobs_week=recent_jobs_week,
+        week_counts=week_counts,
+        week_labels=week_labels
+    )
