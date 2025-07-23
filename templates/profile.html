@@ -1,70 +1,151 @@
-<!-- templates/profile.html -->
-<!doctype html>
+{% include 'navbar.html' %}
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>User Profile</title>
-  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet" />
-  {% include 'navbar.html' %}
+  <meta charset="UTF-8"/>
+  <title>User Profile — MarketMind</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <style>
+    body { font-family:'Inter','Roboto',sans-serif; background: #f8f9fb; color: #333;}
+    h1, h2 { font-family:'Inter',sans-serif; font-weight:700;}
+    .input-blend { background: white; border: 1.5px solid #E5E7EB; }
+    .input-blend:focus { border-color: #2D3A74!important; box-shadow: 0 0 0 1.5px #2D3A7477; }
+    .profile-card { max-width: 1024px; }
+    select[multiple] { height: 3.2em; min-height: 52px; }
+    @media (min-width: 1024px) {
+      .profile-card { max-width: 1100px; }
+    }
+  </style>
 </head>
 <body>
-  <h2>Update Profile</h2>
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-      <ul>
-        {% for message in messages %}<li>{{ message }}</li>{% endfor %}
-      </ul>
-    {% endif %}
-  {% endwith %}
+<main class="flex min-h-screen flex-col items-center bg-[#f8f9fb] pt-10 pb-4">
+  <div class="profile-card w-full mx-auto bg-white rounded-2xl shadow px-8 sm:px-14 py-10 sm:py-14">
+    <h1 class="text-3xl md:text-4xl font-bold mb-2 text-[#23263B]">User Profile</h1>
+    <p class="text-gray-500 mb-8">Manage your personal information and resume.</p>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="mb-4">
+          {% for message in messages %}
+            <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded text-sm mb-2">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
 
-  <!-- Select2 Styles and Scripts -->
-  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
-  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <form action="{{ url_for('profile') }}" method="POST" enctype="multipart/form-data" class="space-y-10">
 
-  <form method="POST" enctype="multipart/form-data">
-    <label for="title">Preferred Job Titles:</label><br>
-    <select id="title" name="title" multiple style="width: 300px;" required>
-      {% set selected_titles = profile.preferred_title.split(',') if profile and profile.preferred_title else [] %}
-      {% for job in jobs|unique(attribute='title') %}
-        <option value="{{ job.title }}"
-          {% if job.title in selected_titles %}selected{% endif %}>
-          {{ job.title }}
-        </option>
-      {% endfor %}
-    </select><br><br>
-
-    <label for="location">Preferred Locations:</label><br>
-    <select id="location" name="location" multiple style="width: 300px;">
-      {% set selected_locations = profile.preferred_location.split(',') if profile and profile.preferred_location else [] %}
-      {% for job in jobs|unique(attribute='company') %}
-        <option value="{{ job.company }}"
-          {% if job.company in selected_locations %}selected{% endif %}>
-          {{ job.company }}
-        </option>
-      {% endfor %}
-    </select><br><br>
-
-    {% if profile and profile.resume_filename %}
-      <div style="margin-bottom:15px;">
-        <strong>Your Resume:</strong>
-        <a href="{{ url_for('view_resume', filename=profile.resume_filename) }}" target="_blank">
-          🧾 View / Download Resume
-        </a>
+      <!-- Personal Info -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-7">
+        <div>
+          <label for="first-name" class="block text-sm font-medium mb-1 text-gray-700">First Name</label>
+          <input id="first-name" name="first-name" type="text"
+            class="input-blend rounded-md w-full px-3 py-3"
+            value="{{ profile.first_name if profile else '' }}">
+        </div>
+        <div>
+          <label for="last-name" class="block text-sm font-medium mb-1 text-gray-700">Last Name</label>
+          <input id="last-name" name="last-name" type="text"
+            class="input-blend rounded-md w-full px-3 py-3"
+            value="{{ profile.last_name if profile else '' }}">
+        </div>
       </div>
-    {% endif %}
+      <div>
+        <label for="email" class="block text-sm font-medium mb-1 text-gray-700">Email Address</label>
+        <input id="email" name="email" type="email"
+          class="input-blend rounded-md w-full px-3 py-3"
+          value="{{ profile.email if profile else current_user.email }}" readonly>
+      </div>
+      <div>
+        <label for="bio" class="block text-sm font-medium mb-1 text-gray-700">Bio</label>
+        <textarea id="bio" name="bio" rows="3"
+          class="input-blend rounded-md w-full px-3 py-3 resize-none">{{ profile.bio if profile else '' }}</textarea>
+      </div>
 
-    <label for="resume">Resume Upload (PDF/DOCX):</label><br>
-    <input type="file" name="resume"><br><br>
+      <hr class="my-4 border-gray-200">
 
-    <button type="submit">Save Profile</button>
-  </form>
+      <!-- Preferred Titles and Locations, matching batch apply visual style -->
+      <div class="grid lg:grid-cols-2 gap-x-8 gap-y-8">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2" for="preferred_titles">Preferred Job Titles</label>
+          <select name="title" id="preferred_titles" multiple 
+            class="input-blend rounded-lg w-full px-3 py-2 text-base"
+          >
+            {% set selected_titles = profile.preferred_title.split(',') if profile and profile.preferred_title else [] %}
+            <option disabled>All Titles (multi-select)</option>
+            {% for job in jobs|unique(attribute='title') %}
+              <option value="{{ job.title }}" {% if job.title in selected_titles %}selected{% endif %}>{{ job.title }}</option>
+            {% endfor %}
+          </select>
+          <input name="title_custom" type="text" placeholder="Add custom title(s), comma separated"
+                 class="input-blend rounded-md w-full px-3 py-2 mt-2 mb-1" value="{{ request.form.title_custom or '' }}">
+          <div class="text-xs text-gray-400">Hold Ctrl (Cmd) to multi-select, or enter custom titles.</div>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2" for="preferred_locations">Preferred Companies</label>
+          <select name="location" id="preferred_locations" multiple
+            class="input-blend rounded-lg w-full px-3 py-2 text-base"
+          >
+            {% set selected_locations = profile.preferred_location.split(',') if profile and profile.preferred_location else [] %}
+            <option disabled>All Companies (multi-select)</option>
+            {% for job in jobs|unique(attribute='company') %}
+              <option value="{{ job.company }}" {% if job.company in selected_locations %}selected{% endif %}>{{ job.company }}</option>
+            {% endfor %}
+          </select>
+          <input name="location_custom" type="text" placeholder="Add custom company(s), comma separated"
+                 class="input-blend rounded-md w-full px-3 py-2 mt-2 mb-1" value="{{ request.form.location_custom or '' }}">
+          <div class="text-xs text-gray-400">Hold Ctrl (Cmd) to multi-select, or enter custom companies.</div>
+        </div>
+      </div>
 
-  <script>
-$(function() {
-  $('#title').select2({ tags: true, placeholder: 'Select or enter job titles', width: 'resolve' });
-  $('#location').select2({ tags: true, placeholder: 'Select or enter locations', width: 'resolve' });
-});
-  </script>
+      <hr class="my-4 border-gray-200">
+
+      <!-- Resume Section -->
+      <div>
+        <h2 class="text-lg font-semibold text-[#23263B] mb-1">Resume</h2>
+        <p class="text-gray-500 text-sm mb-5">Keep your resume up-to-date to showcase your latest achievements.</p>
+        {% if profile and profile.resume_filename %}
+        <div class="flex items-center justify-between mb-4 bg-[#f9fafb] border border-[#e5e7eb] rounded-lg p-4">
+          <div class="flex items-center gap-3">
+            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div>
+              <p class="text-base font-medium text-gray-900">{{ profile.resume_filename }}</p>
+              <p class="text-xs text-gray-500">
+                Uploaded on
+                {% if profile.updated_at %}{{ profile.updated_at.strftime('%d %b %Y') }}{% endif %}
+              </p>
+            </div>
+          </div>
+          <a href="{{ url_for('view_resume', filename=profile.resume_filename) }}" target="_blank"
+            class="rounded border border-gray-300 px-4 py-2 text-sm font-medium text-[#222] hover:bg-gray-100 transition">
+            View
+          </a>
+        </div>
+        {% endif %}
+        <div class="mt-4">
+          <label for="resume-upload" class="sr-only">Upload Resume</label>
+          <div class="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 px-6 py-8 text-center">
+            <svg class="mx-auto mb-3 h-8 w-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <path d="M12 16V8M8 12l4-4 4 4M3 16v2a3 3 0 003 3h12a3 3 0 003-3v-2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>
+              <label for="resume-upload" class="font-semibold text-[#2D3A74] cursor-pointer hover:underline">Upload</label>
+              <span class="text-gray-500">a file or drag and drop</span>
+            </span>
+            <input id="resume-upload" name="resume" type="file" accept=".pdf,.doc,.docx" class="sr-only"/>
+            <p class="text-sm text-gray-400 mt-1">PDF, DOCX up to 10MB</p>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end pt-10 border-t border-gray-200 mt-10">
+        <button class="flex items-center justify-center rounded-lg h-12 px-8 bg-[#2D3A74] text-white text-lg font-semibold shadow hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2D3A74] transition w-56" type="submit">
+          Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</main>
 </body>
-</html> 
+</html>
