@@ -1,21 +1,121 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Register</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Job Bot – Register</title>
+
+  <!-- Fonts + Tailwind -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+  <style type="text/tailwindcss">
+    :root {
+      --brand-primary: #0c7ff2;
+      --brand-hover: #1d4ed8;
+      --neutral-bg: #f9fafb;
+      --text-primary: #111827;
+      --text-secondary: #6b7280;
+      --border-color: #d1d5db;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    .form-input {
+      @apply w-full rounded-md border border-[var(--border-color)] bg-white p-3 text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-opacity-50;
+    }
+
+    .btn {
+      @apply flex h-10 items-center justify-center rounded-md px-4 text-sm font-semibold transition duration-150 ease-in-out;
+    }
+
+    .btn-primary {
+      @apply bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-hover)];
+    }
+
+    .btn-secondary {
+      @apply bg-[var(--neutral-bg)] text-[var(--text-primary)] hover:bg-gray-100 border border-[var(--border-color)];
+    }
+  </style>
 </head>
-<body>
-    <h2>Create an Account</h2>
+<body class="bg-[var(--neutral-bg)] text-[var(--text-primary)]">
 
-    <form method="POST">
-      <label>Email:</label><br>
-      <input type="email" name="email" required><br><br>
+<!-- ✅ Navbar -->
+<header class="sticky top-0 z-10 w-full border-b border-[var(--border-color)] bg-white backdrop-blur-md">
+  <div class="max-w-7xl mx-auto h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center gap-3">
+      <svg class="w-6 h-6 text-[var(--brand-primary)]" fill="none" viewBox="0 0 24 24"><path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="#0c7ff2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <a href="{{ url_for('dashboard') }}" class="text-lg font-bold text-[var(--text-primary)]">Job Bot</a>
+    </div>
+    <div class="flex items-center gap-4">
+      <a href="{{ url_for('login') }}" class="btn btn-secondary hidden sm:inline-flex">Login</a>
+    </div>
+  </div>
+</header>
 
-      <label>Password:</label><br>
-      <input type="password" name="password" required><br><br>
+<!-- ✅ Main Content -->
+<main class="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+  <div class="w-full max-w-md space-y-8">
+    <div class="text-center">
+      <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">Create Your Account</h1>
+      <p class="text-[var(--text-secondary)] mt-2">Start applying effortlessly with Job Bot.</p>
+    </div>
 
-      <button type="submit">Register</button>
-    </form>
+    <div class="rounded-xl bg-white border border-[var(--border-color)] p-8 shadow-sm">
+      <form action="{{ url_for('register') }}" method="POST" class="space-y-6">
+        <!-- Email -->
+        <div>
+          <label for="email" class="block text-sm font-medium">Email Address</label>
+          <input type="email" id="email" name="email" required placeholder="you@example.com" autocomplete="email" class="form-input" />
+        </div>
 
-    <p>Already have an account? <a href="{{ url_for('login') }}">Login here</a>.</p>
+        <!-- Password -->
+        <div>
+          <label for="password" class="block text-sm font-medium">Password</label>
+          <input type="password" id="password" name="password" required placeholder="••••••••" autocomplete="new-password" class="form-input" />
+        </div>
+
+        <!-- Submit -->
+        <div>
+          <button type="submit" class="btn btn-primary w-full !h-11">Sign up for free</button>
+        </div>
+      </form>
+
+      <!-- Divider -->
+      <div class="my-6 relative">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-[var(--border-color)]"></div>
+        </div>
+        <div class="relative text-sm text-center">
+          <span class="bg-white px-2 text-[var(--text-secondary)]">OR</span>
+        </div>
+      </div>
+
+      <!-- Optional: Social Signups -->
+      <div class="grid grid-cols-2 gap-3">
+        <a href="#" class="btn btn-secondary w-full">
+          <span class="sr-only">Sign up with Google</span>
+          <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M..." />
+          </svg>
+          Google
+        </a>
+        <a href="#" class="btn btn-secondary w-full">
+          <span class="sr-only">Sign up with GitHub</span>
+          <svg class="w-5 h-5 mr-2" fill="currentColor"><path d="..." /></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+
+    <p class="text-center text-sm text-[var(--text-secondary)]">
+      Already have an account?
+      <a href="{{ url_for('login') }}" class="font-medium text-[var(--brand-primary)] hover:underline">Log in</a>
+    </p>
+  </div>
+</main>
+
 </body>
-</html> 
+</html>
