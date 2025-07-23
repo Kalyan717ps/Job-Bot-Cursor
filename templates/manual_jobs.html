@@ -1,37 +1,49 @@
-<!DOCTYPE html>
-<html>
-<head><title>Manual Apply Jobs</title></head>
 {% include 'navbar.html' %}
-<body>
-  <h2>🛠 Manual Job Applications</h2>
-  <table border="1" cellpadding="8">
-    <thead>
-      <tr>
-        <th>Job Title</th>
-        <th>Company</th>
-        <th>Link</th>
-        <th>Mark Done</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for job in jobs %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Manual Jobs — MarketMind</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#f8f9fb]">
+<main class="max-w-5xl mx-auto px-4 py-10 sm:px-6">
+  <h1 class="text-3xl font-bold text-gray-900 mb-6">🛠 Manual Jobs List</h1>
+
+  {% if jobs %}
+  <div class="bg-white border rounded-lg shadow overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+      <thead class="bg-gray-50 text-left font-semibold text-gray-600">
         <tr>
-          <td>{{ job.job_title }}</td>
-          <td>{{ job.company }}</td>
-          <td><a href="{{ job.link }}" target="_blank">View</a></td>
-          <td>
-            <form method="POST" style="display:inline;">
-              <input type="hidden" name="job_id" value="{{ job.id }}">
-              <button type="submit">✔ Done</button>
+          <th class="px-4 py-3">Job Title</th>
+          <th class="px-4 py-3">Company</th>
+          <th class="px-4 py-3">Link</th>
+          <th class="px-4 py-3">Mark as Done</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100 text-gray-800">
+        {% for job in jobs %}
+        <tr>
+          <td class="px-4 py-3">{{ job.job_title }}</td>
+          <td class="px-4 py-3">{{ job.company }}</td>
+          <td class="px-4 py-3">
+            <a href="{{ job.link }}" class="text-blue-600 hover:underline" target="_blank">View</a>
+          </td>
+          <td class="px-4 py-3">
+            <form method="POST" action="{{ url_for('mark_done', job_id=job.id) }}">
+              <button type="submit" class="text-green-700 hover:underline font-semibold">✔ Done</button>
             </form>
           </td>
         </tr>
-      {% else %}
-        <tr>
-          <td colspan="4">No manual jobs found. Great job bot!</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="text-center text-gray-500 text-sm mt-10">🎉 No pending manual jobs.</p>
+  {% endif %}
+</main>
 </body>
-</html> 
+</html>

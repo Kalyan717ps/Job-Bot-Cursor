@@ -1,58 +1,99 @@
-<!DOCTYPE html>
-<html>
-<head><title>All Applications</title></head>
 {% include 'navbar.html' %}
-<body>
-  <h2>📋 Applied Jobs</h2>
 
-  <p>
-    <a href="{{ url_for('export_applications') }}">
-      📥 Download My Applied Jobs as CSV
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Applications — MarketMind</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#f8f9fb] text-gray-800">
+<main class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h1 class="text-2xl font-bold">📥 My Applications</h1>
+      <p class="text-sm text-gray-500">Review job applications you've submitted.</p>
+    </div>
+    <a href="{{ url_for('export_applications') }}" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+      ⬇️ Export CSV
     </a>
-  </p>
+  </div>
 
-  <h3>✅ Applied Automatically</h3>
-  <table border="1" cellpadding="8">
-    <tr>
-      <th>Title</th><th>Company</th><th>Link</th><th>Date</th>
-    </tr>
-    {% for job in applications %}
-      {% if job.status == 'applied' %}
-      <tr>
-        <td>{{ job.job_title }}</td>
-        <td>{{ job.company }}</td>
-        <td><a href="{{ job.link }}" target="_blank">View</a></td>
-        <td>{{ job.timestamp.strftime('%d %b %Y %H:%M') }}</td>
-      </tr>
-      {% endif %}
-    {% endfor %}
-  </table>
+  <div class="space-y-10">
+    <!-- Auto-Applied -->
+    <div>
+      <h2 class="text-lg text-gray-800 font-semibold mb-3">🧠 Auto-Applied Jobs</h2>
+      <div class="bg-white border rounded-lg shadow overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="bg-gray-50 text-left font-semibold text-gray-600">
+            <tr>
+              <th class="px-4 py-3">Title</th>
+              <th class="px-4 py-3">Company</th>
+              <th class="px-4 py-3">Link</th>
+              <th class="px-4 py-3">Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for job in applications if job.status == 'applied' %}
+              <tr class="border-t">
+                <td class="px-4 py-3">{{ job.job_title }}</td>
+                <td class="px-4 py-3">{{ job.company }}</td>
+                <td class="px-4 py-3">
+                  <a class="text-blue-600 underline text-sm" href="{{ job.link }}" target="_blank">View</a>
+                </td>
+                <td class="px-4 py-3">{{ job.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="4" class="p-4 text-center text-gray-400">No auto-applied jobs yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-  <h3>✍️ Applied Manually</h3>
-  <table border="1" cellpadding="8">
-    <tr>
-      <th>Job Title</th>
-      <th>Company</th>
-      <th>Link</th>
-      <th>Date</th>
-      <th>Undo</th>
-    </tr>
-    {% for job in applications %}
-      {% if job.status == 'applied_manual' %}
-      <tr>
-        <td>{{ job.job_title }}</td>
-        <td>{{ job.company }}</td>
-        <td><a href="{{ job.link }}" target="_blank">View</a></td>
-        <td>{{ job.timestamp.strftime('%d %b %Y %H:%M') }}</td>
-        <td>
-          <form method="POST">
-            <input type="hidden" name="job_id" value="{{ job.id }}">
-            <button type="submit" style="color:red;">🗑 Remove</button>
-          </form>
-        </td>
-      </tr>
-      {% endif %}
-    {% endfor %}
-  </table>
+    <!-- Manually Applied -->
+    <div>
+      <h2 class="text-lg font-semibold text-gray-800 mb-3">🛠 Manual Applications</h2>
+      <div class="bg-white border rounded-lg shadow overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="bg-gray-50 text-left font-semibold text-gray-600">
+            <tr>
+              <th class="px-4 py-3">Title</th>
+              <th class="px-4 py-3">Company</th>
+              <th class="px-4 py-3">Link</th>
+              <th class="px-4 py-3">Date</th>
+              <th class="px-4 py-3">Undo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for job in applications if job.status == 'applied_manual' %}
+              <tr class="border-t">
+                <td class="px-4 py-3">{{ job.job_title }}</td>
+                <td class="px-4 py-3">{{ job.company }}</td>
+                <td class="px-4 py-3">
+                  <a class="text-blue-600 underline text-sm" href="{{ job.link }}" target="_blank">View</a>
+                </td>
+                <td class="px-4 py-3">{{ job.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td class="px-4 py-3">
+                  <form method="POST">
+                    <input type="hidden" name="job_id" value="{{ job.id }}">
+                    <button type="submit" class="text-red-500 hover:underline text-sm font-semibold">Undo</button>
+                  </form>
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="5" class="p-4 text-center text-gray-400">No manual applications applied yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
 </body>
-</html> 
+</html>

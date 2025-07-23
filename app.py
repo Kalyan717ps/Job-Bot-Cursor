@@ -429,3 +429,17 @@ def refresh_jobs():
 
 if __name__ == "__main__":
     app.run(debug=True) 
+
+@app.route('/mark-done/<int:job_id>', methods=['POST'])
+@login_required
+def mark_done(job_id):
+    job = Application.query.get(job_id)
+    if job and job.user_id == current_user.id and job.status == 'manual':
+        job.status = 'applied_manual'
+        db.session.commit()
+
+        msg = f"✔️ Marked '{job.job_title}' as done from manual."
+        session.setdefault('job_log', []).append(msg)
+        session.modified = True
+
+    return redirect(url_for('manual_jobs'))
