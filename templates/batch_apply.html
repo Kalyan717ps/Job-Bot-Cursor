@@ -1,82 +1,113 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Batch Apply</title>
-  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
-  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-  {% include 'navbar.html' %}
+  <meta charset="UTF-8">
+  <title>JobFinder - Batch Apply</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Inter + Roboto fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <style>
+    body { font-family: 'Roboto', sans-serif; background: #FDFDFD; }
+    h1, h2, h3, h4, h5, h6 { font-family: 'Inter', sans-serif; font-weight: 700;}
+  </style>
 </head>
 <body>
-  <h2>🚀 Batch Apply</h2>
+  {% include 'navbar.html' %}
 
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-      <ul>
-        {% for message in messages %}
-          <li>{{ message }}</li>
-        {% endfor %}
-      </ul>
-    {% endif %}
-  {% endwith %}
+  <main class="max-w-6xl mx-auto px-4 py-10">
+    <div class="text-center mb-10">
+      <h1 class="text-5xl font-extrabold mb-2 tracking-tight text-gray-900">Batch Apply</h1>
+      <p class="text-lg text-gray-500">Streamline your job search by applying to multiple positions at once.</p>
+    </div>
 
-  <div style="margin-bottom: 15px;">
-    <label>Filter by Job Title:</label>
-    <select id="titleFilter" multiple style="width: 250px;">
-      {% for job in jobs|unique(attribute='title') %}
-        <option value="{{ job.title }}">{{ job.title }}</option>
-      {% endfor %}
-    </select>
+    <!-- Filters -->
+    <div class="bg-white rounded-xl shadow border px-8 py-6 mb-8">
+      <form method="get" class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-end">
+        <div>
+          <label for="job-title" class="block text-sm font-semibold text-gray-700 mb-1">Job Title</label>
+          <select id="job-title" name="title" class="block w-full rounded-lg border border-gray-200 px-3 py-3 text-gray-900 bg-gray-50 focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+            <option value="">All Titles</option>
+            {% for job in jobs|unique(attribute='title') %}
+              <option value="{{ job.title }}" {% if request.args.get('title') == job.title %}selected{% endif %}>{{ job.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="company" class="block text-sm font-semibold text-gray-700 mb-1">Company</label>
+          <select id="company" name="company" class="block w-full rounded-lg border border-gray-200 px-3 py-3 text-gray-900 bg-gray-50 focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
+            <option value="">All Companies</option>
+            {% for job in jobs|unique(attribute='company') %}
+              <option value="{{ job.company }}" {% if request.args.get('company') == job.company %}selected{% endif %}>{{ job.company }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="sm:col-span-2 flex justify-end">
+          <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg shadow-sm mt-2">Apply Filters</button>
+        </div>
+      </form>
+    </div>
 
-    <label style="margin-left:20px;">Filter by Company:</label>
-    <select id="companyFilter" multiple style="width: 250px;">
-      {% for job in jobs|unique(attribute='company') %}
-        <option value="{{ job.company }}">{{ job.company }}</option>
-      {% endfor %}
-    </select>
-  </div>
-
-  <form method="POST">
-    <p><input type="checkbox" id="selectAll"> <label for="selectAll">Select All Jobs</label></p>
-
-    <ul id="jobList">
-      {% for job in jobs %}
-      <li class="job-item"
-          data-title="{{ job.title }}"
-          data-company="{{ job.company }}">
-        <input type="checkbox" name="job_links" value="{{ job.link }}" checked>
-        <strong>{{ job.title }}</strong> @ {{ job.company }}<br>
-        <a href="{{ job.link }}" target="_blank">View Job</a>
-      </li>
-      {% endfor %}
-    </ul>
-
-    <button type="submit">✅ Apply Selected</button>
-  </form>
+    <form method="post" action="{{ url_for('batch_apply') }}">
+      <div class="overflow-hidden bg-white rounded-xl shadow border">
+        <table class="min-w-full text-base">
+          <thead class="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th class="px-6 py-4">
+              <input id="select-all" class="h-5 w-5 rounded text-blue-600 border-gray-400" type="checkbox" onclick="toggleAll(this)">
+            </th>
+            <th class="py-4 pr-3 text-left font-semibold text-gray-900">Job Title</th>
+            <th class="px-3 py-4 text-left font-semibold text-gray-900">Company</th>
+            <th class="px-3 py-4 text-left font-semibold text-gray-900">Location</th>
+            <th class="px-3 py-4 text-left font-semibold text-gray-900">Date Posted</th>
+          </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 bg-white">
+          {% for job in jobs %}
+          <tr class="hover:bg-gray-50 transition">
+            <td class="px-6 py-5">
+              <input class="job-checkbox h-5 w-5 rounded border-gray-400 text-blue-600"
+                     type="checkbox" name="job_links" value="{{ job.link }}">
+            </td>
+            <td class="py-5 pr-3 font-medium text-gray-900">{{ job.title }}</td>
+            <td class="px-3 py-5 text-gray-700">{{ job.company }}</td>
+            <td class="px-3 py-5 text-gray-700">{{ job.location }}</td>
+            <td class="px-3 py-5 text-gray-700">{{ job.date }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" class="text-center py-10 text-gray-400">No jobs match your filter.</td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="flex justify-end mt-8">
+        <button
+          type="submit"
+          id="apply-btn"
+          class="flex items-center rounded-lg bg-blue-700 px-8 py-3 text-base font-semibold text-white shadow hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 transition disabled:opacity-50">
+          Apply to <span class="mx-1 font-bold" id="selected-count">{{ jobs|length }}</span> Selected Jobs
+        </button>
+      </div>
+    </form>
+  </main>
 
   <script>
-$(function() {
-  $('#titleFilter').select2({ placeholder: "Filter by Title", allowClear: true, width: 'resolve' });
-  $('#companyFilter').select2({ placeholder: "Filter by Company", allowClear: true, width: 'resolve' });
-
-  $('#selectAll').on('change', function() {
-    $('input[name="job_links"]').prop('checked', this.checked);
-  });
-
-  $('#titleFilter, #companyFilter').on('change', function () {
-    const titles = $('#titleFilter').val() || [];
-    const companies = $('#companyFilter').val() || [];
-    $('.job-item').each(function () {
-      const title = $(this).data('title');
-      const company = $(this).data('company');
-      const visible =
-        (titles.length === 0 || titles.includes(title)) &&
-        (companies.length === 0 || companies.includes(company));
-      $(this).toggle(visible);
-    });
-  });
-});
-</script>
-
+    // Select all toggle
+    function toggleAll(master) {
+      const checkboxes = document.querySelectorAll('.job-checkbox');
+      checkboxes.forEach(cb => cb.checked = master.checked);
+      updateSelectedCount();
+    }
+    // Update selected jobs count
+    function updateSelectedCount() {
+      const checked = document.querySelectorAll('.job-checkbox:checked').length;
+      document.getElementById('selected-count').textContent = checked;
+      document.getElementById('apply-btn').disabled = checked === 0;
+    }
+    document.querySelectorAll('.job-checkbox').forEach(cb => cb.addEventListener('change', updateSelectedCount));
+    document.addEventListener('DOMContentLoaded', updateSelectedCount);
+  </script>
 </body>
-</html> 
+</html>

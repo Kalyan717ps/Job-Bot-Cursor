@@ -1,137 +1,170 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Dashboard</title>
-  {% include 'navbar.html' %}
+  <meta charset="UTF-8" />
+  <title>Job Bot Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- TailwindCSS & Work Sans for style -->
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    ul.stats {
-      list-style-type: none;
-      padding: 0;
-      font-size: 1.1em;
+    body {
+      font-family: 'Work Sans', sans-serif;
+      background-color: #f8fafe;
     }
-    ul.stats li {
-      padding: 6px 0;
+    .stat-value {
+      font-weight: 700;
+      font-size: 2.5rem;
+      color: #2e77f1;
+    }
+    .stat-label {
+      color: #6b7280;
+      font-size: 0.95rem;
+      font-weight: 500;
     }
   </style>
 </head>
-<body>
-  {% if profile and profile.resume_filename %}
-    <div style="background:#e8f4fc; border: 1px solid #22aaff; padding:10px; margin-bottom:20px;">
-      <strong>Resume on File:</strong>
-      <a href="{{ url_for('view_resume', filename=profile.resume_filename) }}" target="_blank">
-        📄 View / Download Resume
-      </a>
+<body class="bg-gray-50 text-gray-800 min-h-screen">
+  {% include 'navbar.html' %}
+
+  <main class="max-w-6xl mx-auto px-4 py-8 space-y-7">
+    <!-- Resume Card -->
+    {% if profile and profile.resume_filename %}
+      <section class="rounded-xl bg-white shadow border flex flex-col sm:flex-row items-center p-6 gap-7">
+        <div class="flex-1">
+          <div class="font-semibold text-xl text-gray-800">Resume on File</div>
+          <div class="text-gray-500 text-sm mt-1 mb-2">{{ profile.resume_filename }}</div>
+          <a href="{{ url_for('view_resume', filename=profile.resume_filename) }}"
+             class="inline-block bg-blue-600 text-white px-4 py-2 rounded-md mt-4 font-medium hover:bg-blue-700 transition"
+             target="_blank">View / Download Resume</a>
+        </div>
+      </section>
+    {% endif %}
+
+    <!-- Dashboard header + Refresh -->
+    <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+      <h1 class="text-2xl font-bold text-gray-800">Hello, {{ current_user.email }}</h1>
+      <form action="{{ url_for('refresh_jobs') }}" method="get">
+        <button type="submit" class="bg-blue-500 px-4 py-2 rounded-md text-white font-semibold hover:bg-blue-600 transition">🔄 Refresh Job List</button>
+      </form>
     </div>
-  {% endif %}
 
-  <form action="{{ url_for('refresh_jobs') }}" method="get" style="display:inline; float:right; margin-top:10px;">
-    <button type="submit" style="background:#3a8fff; color:#fff; border:none; padding:8px 16px; border-radius:4px;">
-      🔄 Refresh Job List
-    </button>
-  </form>
+    <!-- Stats Cards -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="bg-white rounded-xl shadow border p-6 flex flex-col items-start">
+        <span class="stat-label">Total Jobs Applied</span>
+        <span class="stat-value mt-2">{{ stats.applied_total }}</span>
+      </div>
+      <div class="bg-white rounded-xl shadow border p-6 flex flex-col items-start">
+        <span class="stat-label">Applied This Week</span>
+        <span class="stat-value mt-2">{{ stats.applied_this_week }}</span>
+      </div>
+      <div class="bg-white rounded-xl shadow border p-6 flex flex-col items-start">
+        <span class="stat-label">Manual Apply Left</span>
+        <span class="stat-value mt-2">{{ stats.manual_pending }}</span>
+      </div>
+    </section>
 
-  <h2>📊 Your Dashboard</h2>
+    <!-- New Jobs Panel -->
+    <section class="bg-white rounded-xl shadow border p-6">
+      <h2 class="text-lg font-semibold text-gray-800 mb-3">New Jobs</h2>
+      <div class="mb-3">
+        <h3 class="text-blue-600 font-medium text-sm">{{ recent_jobs_day|length }} jobs in the last 24 hours</h3>
+        <ul class="list-disc list-inside mt-1 space-y-1 text-sm">
+          {% for job in recent_jobs_day %}
+            <li>
+              <span class="font-medium">{{ job.title }}</span> at {{ job.company }}
+              <a href="{{ job.link }}" target="_blank" class="ml-2 text-blue-600 underline">View Job</a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div>
+        <h3 class="text-blue-600 font-medium text-sm mt-4">{{ recent_jobs_week|length }} jobs in the last 7 days</h3>
+        <ul class="list-disc list-inside mt-1 space-y-1 text-sm">
+          {% for job in recent_jobs_week %}
+            <li>
+              <span class="font-medium">{{ job.title }}</span> at {{ job.company }}
+              <a href="{{ job.link }}" target="_blank" class="ml-2 text-blue-600 underline">View Job</a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
 
-  <!-- 📈 Stats Section -->
-  <div style="border:1px solid #ccc; padding:15px; margin-bottom:20px;">
-    <h3 style="margin-top:0;">📈 Application Stats</h3>
-    <ul class="stats">
-      <li><strong>✅ Total Jobs Applied:</strong> {{ stats.applied_total }}</li>
-      <li><strong>📆 Applied This Week:</strong> {{ stats.applied_this_week }}</li>
-      <li><strong>🛠 Manual Apply Left:</strong> {{ stats.manual_pending }}</li>
-    </ul>
-  </div>
+    <!-- Weekly Trends Chart -->
+    <section class="flex flex-col gap-2 bg-white rounded-xl shadow border p-6">
+      <h2 class="text-lg font-semibold text-gray-800 mb-3">Weekly Applications</h2>
+      <canvas id="weeklyChart" class="w-full h-56"></canvas>
+    </section>
 
-  <!-- 🆕 New Jobs Panel -->
-  <h3>🆕 New Jobs Added</h3>
-  <div style="border:1px solid #007BFF; padding:15px; margin-bottom:20px;">
-      <strong>{{ recent_jobs_day|length }} new jobs in the last 24 hours:</strong>
-      <ul>
-        {% for job in recent_jobs_day %}
-          <li><a href="{{ job.link }}" target="_blank">{{ job.title }}</a> at {{ job.company }}</li>
+    <!-- Matching Jobs -->
+    <section class="bg-white rounded-xl shadow border p-6">
+      <h2 class="text-lg font-semibold text-gray-800 mb-3">Matching Jobs</h2>
+      {% if jobs %}
+        <ul class="divide-y divide-gray-200">
+          {% for job in jobs %}
+            <li class="py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+              <div>
+                <span class="font-semibold">{{ job.title }}</span>
+                <span class="text-gray-500">at</span>
+                <span class="font-medium text-gray-900">{{ job.company }}</span>
+              </div>
+              <a href="{{ job.link }}" target="_blank" class="text-blue-600 underline text-sm font-medium">View Job</a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-gray-500">No matching jobs found.</p>
+      {% endif %}
+    </section>
+
+    <!-- Log History -->
+    {% if session.job_log %}
+    <section class="bg-white rounded-xl shadow border p-6">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-800 mb-3">Log History</h2>
+        <form action="{{ url_for('clear_log') }}" method="get">
+          <button type="submit" class="text-red-500 text-sm rounded px-2 py-1 hover:bg-red-50">🧹 Clear History</button>
+        </form>
+      </div>
+      <ul class="max-h-40 overflow-y-auto text-sm text-gray-700 space-y-1">
+        {% for log in session.job_log[-10:] %}
+          <li>• {{ log }}</li>
         {% endfor %}
       </ul>
-      <strong>{{ recent_jobs_week|length }} new jobs in the last week:</strong>
-      <ul>
-        {% for job in recent_jobs_week %}
-          <li><a href="{{ job.link }}" target="_blank">{{ job.title }}</a> at {{ job.company }}</li>
-        {% endfor %}
-      </ul>
-  </div>
+    </section>
+    {% endif %}
+  </main>
 
-  <!-- Weekly Application Trends Chart -->
-  <h3>📊 Weekly Applications</h3>
-  <div style="margin-bottom: 20px;">
-    <canvas id="weeklyChart" width="400" height="150"></canvas>
-  </div>
-
-  <!-- Inject Jinja variables into window object before main chart.js script -->
-  <script>
-    window.WEEKLY_LABELS = {{ week_labels|tojson }};
-    window.WEEKLY_COUNTS = {{ week_counts|tojson }};
-  </script>
-
+  <!-- Chart.js for Weekly Trends -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-    const labels = window.WEEKLY_LABELS;
-    const counts = window.WEEKLY_COUNTS;
-
     const ctx = document.getElementById('weeklyChart').getContext('2d');
-    const weeklyChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Applications per Week',
-                data: counts,
-                backgroundColor: '#3a8fff',
-                borderRadius: 4
-            }]
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: {{ week_labels | tojson }},
+        datasets: [{
+          label: 'Applications per Week',
+          data: {{ week_counts | tojson }},
+          backgroundColor: '#2563eb',
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false }
         },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        precision: 0 // Ensure y-axis labels are integers
-                    }
-                }
-            }
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { precision: 0 }
+          }
         }
+      }
     });
   </script>
-
-  <h3>🎯 Matching Jobs</h3>
-  {% if jobs %}
-    <ul>
-      {% for job in jobs %}
-        <li>
-          <strong>{{ job.title }}</strong> @ {{ job.company }}<br>
-          <a href="{{ job.link }}" target="_blank">View Job</a>
-        </li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <p>No matching jobs found.</p>
-  {% endif %}
-
-  {% if session.job_log %}
-    <h3>📝 Log History</h3>
-    <ul>
-      {% for log in session.job_log[-10:] %}
-        <li>{{ log }}</li>
-      {% endfor %}
-    </ul>
-    <form action="{{ url_for('clear_log') }}" method="get" style="margin-top:10px;">
-      <button type="submit">🧹 Clear History</button>
-    </form>
-  {% endif %}
 </body>
-</html> 
+</html>

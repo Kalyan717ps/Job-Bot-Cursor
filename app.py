@@ -246,6 +246,7 @@ def batch_apply():
     bot_path = os.path.join(os.getcwd(), 'apply_bot.py')
     python_path = os.path.join(os.getcwd(), 'env', 'Scripts', 'python.exe')
 
+    # POST (apply selected jobs): no change needed
     if request.method == 'POST':
         selected_links = request.form.getlist('job_links')
         applied, manual = 0, 0
@@ -293,12 +294,23 @@ def batch_apply():
         flash(f"✅ Batch Apply: {applied} job(s) applied, {manual} sent to manual apply.")
         return redirect(url_for('dashboard'))
 
-    # GET: Show all jobs
+    # GET: Show all jobs, with filters
     with open("remoteok_jobs.csv", newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         all_jobs = list(reader)
 
-    return render_template("batch_apply.html", jobs=all_jobs)
+    # Add filtering logic here!
+    title_filter = request.args.get('title', '').strip().lower()
+    company_filter = request.args.get('company', '').strip().lower()
+
+    filtered_jobs = []
+    for job in all_jobs:
+        title_match = not title_filter or title_filter in job['title'].lower()
+        company_match = not company_filter or company_filter in job['company'].lower()
+        if title_match and company_match:
+            filtered_jobs.append(job)
+
+    return render_template("batch_apply.html", jobs=filtered_jobs)
 
 @app.route('/applications', methods=['GET', 'POST'])
 @login_required
