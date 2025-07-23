@@ -1,173 +1,164 @@
+{% include 'navbar.html' %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Job Bot Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- TailwindCSS & Work Sans for style -->
-  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+  <title>Dashboard — MarketMind</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
-      font-family: 'Work Sans', sans-serif;
-      background-color: #f8fafe;
-    }
-    .stat-value {
-      font-weight: 700;
-      font-size: 2.5rem;
-      color: #2e77f1;
-    }
-    .stat-label {
-      color: #6b7280;
-      font-size: 0.95rem;
-      font-weight: 500;
+      font-family: 'Inter', sans-serif;
+      background-color: #f8f9fb;
     }
   </style>
 </head>
-<body class="bg-gray-50 text-gray-800 min-h-screen">
-  {% include 'navbar.html' %}
+<body>
+<main class="max-w-6xl mx-auto py-10 px-6">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-6">
+    <h2 class="text-3xl font-bold text-gray-800">
+      👋 Hello, {{ current_user.first_name }}
+    </h2>
+    <form action="{{ url_for('refresh_jobs') }}" method="get">
+      <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2 rounded-md text-sm font-semibold">
+        🔄 Refresh Job List
+      </button>
+    </form>
+  </div>
 
-  <main class="max-w-6xl mx-auto px-4 py-8 space-y-7">
-    <!-- Resume Card -->
-    {% if profile and profile.resume_filename %}
-      <section class="rounded-xl bg-white shadow border flex flex-col sm:flex-row items-center p-6 gap-7">
-        <div class="flex-1">
-          <div class="font-semibold text-xl text-gray-800">Resume on File</div>
-          <div class="text-gray-500 text-sm mt-1 mb-2">{{ profile.resume_filename }}</div>
-          <a href="{{ url_for('view_resume', filename=profile.resume_filename) }}"
-             class="inline-block bg-blue-600 text-white px-4 py-2 rounded-md mt-4 font-medium hover:bg-blue-700 transition"
-             target="_blank">View / Download Resume</a>
-        </div>
-      </section>
-    {% endif %}
-
-    <!-- Dashboard header + Refresh -->
-    <div class="flex flex-col md:flex-row justify-between items-center gap-6">
-      <h2 class="mb-6 text-3xl font-bold">
-        Hello, {{ current_user.first_name }}
-      </h2>
-      
-      <form action="{{ url_for('refresh_jobs') }}" method="get">
-        <button type="submit" class="bg-blue-500 px-4 py-2 rounded-md text-white font-semibold hover:bg-blue-600 transition">🔄 Refresh Job List</button>
-      </form>
+  <!-- Resume -->
+  {% if profile and profile.resume_filename %}
+  <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md flex justify-between items-center">
+    <div>
+      📄 <strong>Resume on File:</strong> {{ profile.resume_filename }}
     </div>
+    <a href="{{ url_for('view_resume', filename=profile.resume_filename) }}" target="_blank"
+       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm rounded-md font-semibold transition">
+      🔍 View / Download
+    </a>
+  </div>
+  {% else %}
+  <div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-800">
+    ⚠️ No resume uploaded. Please add one in your <a href="{{ url_for('profile') }}" class="underline">Profile</a>.
+  </div>
+  {% endif %}
 
-    <!-- Stats Cards -->
-    <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="bg-white rounded-xl shadow border p-6 flex flex-col items-start">
-        <span class="stat-label">Total Jobs Applied</span>
-        <span class="stat-value mt-2">{{ stats.applied_total }}</span>
-      </div>
-      <div class="bg-white rounded-xl shadow border p-6 flex flex-col items-start">
-        <span class="stat-label">Applied This Week</span>
-        <span class="stat-value mt-2">{{ stats.applied_this_week }}</span>
-      </div>
-      <div class="bg-white rounded-xl shadow border p-6 flex flex-col items-start">
-        <span class="stat-label">Manual Apply Left</span>
-        <span class="stat-value mt-2">{{ stats.manual_pending }}</span>
-      </div>
-    </section>
+  <!-- Stats -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center mb-10">
+    <div class="bg-white rounded-lg shadow-sm p-6 border">
+      <div class="text-sm text-gray-500">✅ Total Jobs Applied</div>
+      <div class="text-2xl font-bold mt-1">{{ stats.applied_total }}</div>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm p-6 border">
+      <div class="text-sm text-gray-500">📆 Applied This Week</div>
+      <div class="text-2xl font-bold mt-1">{{ stats.applied_this_week }}</div>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm p-6 border">
+      <div class="text-sm text-gray-500">🛠 Manual Apply Left</div>
+      <div class="text-2xl font-bold mt-1">{{ stats.manual_pending }}</div>
+    </div>
+  </div>
 
-    <!-- New Jobs Panel -->
-    <section class="bg-white rounded-xl shadow border p-6">
-      <h2 class="text-lg font-semibold text-gray-800 mb-3">New Jobs</h2>
-      <div class="mb-3">
-        <h3 class="text-blue-600 font-medium text-sm">{{ recent_jobs_day|length }} jobs in the last 24 hours</h3>
-        <ul class="list-disc list-inside mt-1 space-y-1 text-sm">
-          {% for job in recent_jobs_day %}
-            <li>
-              <span class="font-medium">{{ job.title }}</span> at {{ job.company }}
-              <a href="{{ job.link }}" target="_blank" class="ml-2 text-blue-600 underline">View Job</a>
-            </li>
-          {% endfor %}
-        </ul>
-      </div>
-      <div>
-        <h3 class="text-blue-600 font-medium text-sm mt-4">{{ recent_jobs_week|length }} jobs in the last 7 days</h3>
-        <ul class="list-disc list-inside mt-1 space-y-1 text-sm">
-          {% for job in recent_jobs_week %}
-            <li>
-              <span class="font-medium">{{ job.title }}</span> at {{ job.company }}
-              <a href="{{ job.link }}" target="_blank" class="ml-2 text-blue-600 underline">View Job</a>
-            </li>
-          {% endfor %}
-        </ul>
-      </div>
-    </section>
+  <!-- New Jobs -->
+  <div class="mb-12">
+    <h3 class="text-xl font-semibold text-gray-800 mb-4">🆕 New Jobs</h3>
 
-    <!-- Weekly Trends Chart -->
-    <section class="flex flex-col gap-2 bg-white rounded-xl shadow border p-6">
-      <h2 class="text-lg font-semibold text-gray-800 mb-3">Weekly Applications</h2>
-      <canvas id="weeklyChart" class="w-full h-56"></canvas>
-    </section>
-
-    <!-- Matching Jobs -->
-    <section class="bg-white rounded-xl shadow border p-6">
-      <h2 class="text-lg font-semibold text-gray-800 mb-3">Matching Jobs</h2>
-      {% if jobs %}
-        <ul class="divide-y divide-gray-200">
-          {% for job in jobs %}
-            <li class="py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-              <div>
-                <span class="font-semibold">{{ job.title }}</span>
-                <span class="text-gray-500">at</span>
-                <span class="font-medium text-gray-900">{{ job.company }}</span>
-              </div>
-              <a href="{{ job.link }}" target="_blank" class="text-blue-600 underline text-sm font-medium">View Job</a>
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p class="text-gray-500">No matching jobs found.</p>
-      {% endif %}
-    </section>
-
-    <!-- Log History -->
-    {% if session.job_log %}
-    <section class="bg-white rounded-xl shadow border p-6">
-      <div class="flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-gray-800 mb-3">Log History</h2>
-        <form action="{{ url_for('clear_log') }}" method="get">
-          <button type="submit" class="text-red-500 text-sm rounded px-2 py-1 hover:bg-red-50">🧹 Clear History</button>
-        </form>
-      </div>
-      <ul class="max-h-40 overflow-y-auto text-sm text-gray-700 space-y-1">
-        {% for log in session.job_log[-10:] %}
-          <li>• {{ log }}</li>
+    <div class="mb-6">
+      <div class="font-medium mb-2 text-blue-700">{{ recent_jobs_day | length }} jobs in the last 24 hours</div>
+      <ul class="list-disc pl-5 space-y-1 text-sm text-gray-700">
+        {% for job in recent_jobs_day %}
+        <li>
+          <strong>{{ job.title }}</strong> at {{ job.company }}
+          <a href="{{ job.link }}" class="text-blue-600 hover:underline ml-2" target="_blank">View Job</a>
+        </li>
         {% endfor %}
       </ul>
-    </section>
-    {% endif %}
-  </main>
+    </div>
 
-  <!-- Chart.js for Weekly Trends -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    const ctx = document.getElementById('weeklyChart').getContext('2d');
-    new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: {{ week_labels | tojson }},
-        datasets: [{
-          label: 'Applications per Week',
-          data: {{ week_counts | tojson }},
-          backgroundColor: '#2563eb',
-          borderRadius: 8
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { precision: 0 }
-          }
+    <div>
+      <div class="font-medium mb-2 text-blue-700">{{ recent_jobs_week | length }} jobs in the last 7 days</div>
+      <ul class="list-disc pl-5 space-y-1 text-sm text-gray-700">
+        {% for job in recent_jobs_week %}
+        <li>
+          <strong>{{ job.title }}</strong> at {{ job.company }}
+          <a href="{{ job.link }}" class="text-blue-600 hover:underline ml-2" target="_blank">View Job</a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <!-- Weekly Applications Chart -->
+  <div class="mb-12">
+    <h3 class="text-xl font-semibold text-gray-800 mb-4">📊 Weekly Applications</h3>
+    <canvas id="weeklyChart" width="400" height="160" class="bg-white p-4 rounded-lg shadow border"></canvas>
+  </div>
+
+  <!-- Matching Jobs -->
+  <div class="mb-12">
+    <h3 class="text-xl font-semibold text-gray-800 mb-4">🎯 Matching Jobs</h3>
+    {% if jobs %}
+    <ul class="space-y-2">
+      {% for job in jobs %}
+      <li class="bg-white p-4 rounded-md shadow-sm flex justify-between items-center border">
+        <div>
+          <div class="font-semibold text-gray-900">{{ job.title }}</div>
+          <div class="text-sm text-gray-600">{{ job.company }}</div>
+        </div>
+        <a href="{{ job.link }}" target="_blank" class="text-blue-600 hover:underline text-sm">View Job</a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-gray-500 text-sm">No matching jobs found.</p>
+    {% endif %}
+  </div>
+
+  <!-- Job Logs -->
+  {% if session.job_log %}
+  <div>
+    <h3 class="text-xl font-semibold text-gray-800 mb-4">📝 Log History</h3>
+    <ul class="text-sm text-gray-700 bg-gray-50 rounded-md border divide-y divide-gray-200 max-h-56 overflow-y-auto">
+      {% for log in session.job_log[-10:] %}
+      <li class="px-4 py-2">• {{ log }}</li>
+      {% endfor %}
+    </ul>
+    <form action="{{ url_for('clear_log') }}" method="get" class="mt-3 text-right">
+      <button class="text-red-500 text-sm hover:underline">🧹 Clear History</button>
+    </form>
+  </div>
+  {% endif %}
+</main>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('weeklyChart').getContext('2d');
+  const chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: {{ week_labels | tojson }},
+      datasets: [{
+        label: 'Applications per Week',
+        data: {{ week_counts | tojson }},
+        backgroundColor: '#3B82F6',
+        borderRadius: 5,
+        barThickness: 40
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { precision: 0 }
         }
       }
-    });
-  </script>
+    }
+  });
+</script>
 </body>
 </html>
