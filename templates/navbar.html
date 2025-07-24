@@ -1,28 +1,61 @@
-<style>
-  nav {
-    position: sticky;
-    top: 0;
-    background: #f9f9f9;
-    padding: 12px 20px;
-    border-bottom: 1px solid #ccc;
-    z-index: 999;
-  }
-  nav a {
-    margin-right: 15px;
-    text-decoration: none;
-    font-weight: bold;
-    color: #333;
-  }
-  nav a:hover {
-    color: #007BFF;
-  }
-</style>
+<header class="sticky top-0 z-50 bg-white/90 backdrop-blur shadow-sm">
+  <div class="container mx-auto flex items-center justify-between px-8 py-5">
+    <!-- Left: Logo and name -->
+    <div class="flex items-center gap-4">
+      <div class="h-9 w-9 text-blue-700 flex items-center justify-center rounded-full bg-blue-50">
+        <!-- SVG or image logo -->
+        <svg viewBox="0 0 48 48" class="w-7 h-7" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- ...your logo path... -->
+          <circle cx="24" cy="24" r="20" fill="#2c3e50"/>
+          <text x="50%" y="58%" text-anchor="middle" fill="white" font-family="Roboto, sans-serif" font-size="18" font-weight="bold">JB</text>
+        </svg>
+      </div>
+      <span class="text-2xl font-bold text-gray-900 tracking-tight">JOB BOT</span>
+    </div>
 
-<nav>
-  <a href="{{ url_for('dashboard') }}">🏠 Dashboard</a>
-  <a href="{{ url_for('batch_apply') }}">🚀 Batch Apply</a>
-  <a href="{{ url_for('applications') }}">📋 Applications</a>
-  <a href="{{ url_for('manual_jobs') }}">🛠 Manual Apply</a>
-  <a href="{{ url_for('profile') }}">👤 Profile</a>
-  <a href="{{ url_for('logout') }}">🚪 Logout</a>
-</nav> 
+    <!-- Center/right: Links (desktop) -->
+    <nav class="hidden md:flex gap-10 items-center flex-1 justify-center">
+      <a href="{{ url_for('dashboard') }}"
+        class="text-base font-medium px-2 py-1 rounded-lg hover:bg-blue-50 hover:text-[#2D3A74] transition-colors"
+        {% if request.endpoint == 'dashboard' %}style="font-weight:bold;"{% endif %}>
+        Dashboard
+      </a>
+      <a href="{{ url_for('batch_apply') }}"
+        class="text-base font-medium px-2 py-1 rounded-lg hover:bg-blue-50 hover:text-[#2D3A74]"
+        {% if request.endpoint == 'batch_apply' %}style="font-weight:bold;"{% endif %}>
+        Batch Apply
+      </a>
+      <a href="{{ url_for('applications') }}"
+        class="text-base font-medium px-2 py-1 rounded-lg hover:bg-blue-50 hover:text-[#2D3A74]"
+        {% if request.endpoint == 'applications' %}style="font-weight:bold;"{% endif %}>
+        Applications
+      </a>
+      <a href="{{ url_for('manual_jobs') }}"
+        class="text-base font-medium px-2 py-1 rounded-lg hover:bg-blue-50 hover:text-[#2D3A74]">
+        Manual Apply
+      </a>
+      <a href="{{ url_for('profile') }}"
+        class="text-base font-medium px-2 py-1 rounded-lg hover:bg-blue-50 hover:text-[#2D3A74]">
+        Profile
+      </a>
+    </nav>
+
+    <!-- Right: Avatar + Logout -->
+    <div class="flex items-center gap-5 ml-4">
+      <div class="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center text-[var(--primary-color)] font-bold text-lg uppercase">
+        {{ current_user.first_name[0] if current_user.is_authenticated else 'U' }}
+      </div>
+      <form action="{{ url_for('logout') }}" method="get">
+        <button class="bg-gray-100 hover:bg-blue-100 text-gray-700 font-medium rounded-lg px-4 py-2 transition-colors"
+          type="submit">Logout</button>
+      </form>
+      <!-- Hamburger (only on mobile) -->
+      <button class="ml-2 md:hidden">
+        <svg class="h-8 w-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+  <!-- Optionally: add a mobile menu below -->
+</header>
